@@ -1,115 +1,51 @@
-/***********************
- LOGIN
-************************/
-function login() {
+// LOGIN ADMIN
+function loginAdmin() {
   const user = document.getElementById("user").value;
   const pass = document.getElementById("pass").value;
 
   if (user === "admin" && pass === "admin123") {
     window.location.href = "admin.html";
-    return;
+  } else {
+    alert("Credenciales admin incorrectas");
   }
+}
 
-  if (user !== "" && user === pass) {
+// LOGIN USUARIO
+function loginUsuario() {
+  const user = document.getElementById("user").value;
+  const pass = document.getElementById("pass").value;
+
+  const baseCoins = JSON.parse(localStorage.getItem("baseCoins")) || {};
+
+  if (user === pass && baseCoins[user]) {
     localStorage.setItem("usuario_actual", user);
     window.location.href = "usuario.html";
-    return;
+  } else {
+    alert("Usuario no existe o credenciales incorrectas");
   }
-
-  alert("Credenciales incorrectas");
 }
 
-/***********************
- ADMIN - PROCESAR EXCEL
- Excel columnas:
- fecha | cedula | vendedor | cedis | coins_ganados
-************************/
+// PROCESAR EXCEL
 function procesarExcel() {
   const file = document.getElementById("excelFile").files[0];
-  if (!file) {
-    alert("Selecciona un archivo Excel");
-    return;
-  }
+  if (!file) return alert("Selecciona un Excel");
 
   const reader = new FileReader();
+  reader.onload = e => {
+    const wb = XLSX.read(new Uint8Array(e.target.result), { type: "array" });
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
 
-  reader.onload = function (e) {
-    const data = new Uint8Array(e.target.result);
-    const workbook = XLSX.read(data, { type: "array" });
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(sheet);
-
-    let baseCoins = JSON.parse(localStorage.getItem("baseCoins")) || {};
-
+    let base = {};
     rows.forEach(r => {
-      const cedula = String(r.cedula);
-
-      if (!baseCoins[cedula]) {
-        baseCoins[cedula] = {
-          vendedor: r.vendedor,
-          cedis: r.cedis,
-          coins_ganados: 0,
-          coins_usados: 0,
-          coins_actuales: 0,
-          historial: []
-        };
-      }
-
-      baseCoins[cedula].coins_ganados += Number(r.coins_ganados);
-      baseCoins[cedula].coins_actuales += Number(r.coins_ganados);
-
-      baseCoins[cedula].historial.push({
-        fecha: r.fecha,
-        tipo: "GANADO",
-        coins: r.coins_ganados
-      });
+      base[r.cedula] = {
+        coins_ganados: r.coins_ganados,
+        coins_usados: 0,
+        coins_actuales: r.coins_ganados
+      };
     });
 
-    localStorage.setItem("baseCoins", JSON.stringify(baseCoins));
-    document.getElementById("resultado").innerText = "Excel procesado correctamente";
+    localStorage.setItem("baseCoins", JSON.stringify(base));
+    document.getElementById("resultado").innerText = "Excel cargado correctamente";
   };
-
   reader.readAsArrayBuffer(file);
-}
-
-/***********************
- USUARIO - MOSTRAR COINS
-************************/
-const usuario = localStorage.getItem("usuario_actual");
-const baseCoins = JSON.parse(localStorage.getItem("baseCoins")) || {};
-
-if (usuario && baseCoins[usuario]) {
-  const p = document.getElementById("coins");
-  if (p) {
-    p.innerText = "Coins actuales: " + baseCoins[usuario].coins_actuales;
-  }
-}
-
-/***********************
- CANJEAR
-************************/
-function canjear(valor, articulo) {
-  if (!baseCoins[usuario]) {
-    alert("Usuario no encontrado");
-    return;
-  }
-
-  if (baseCoins[usuario].coins_actuales < valor) {
-    alert("No tienes coins suficientes");
-    return;
-  }
-
-  baseCoins[usuario].coins_actuales -= valor;
-  baseCoins[usuario].coins_usados += valor;
-
-  baseCoins[usuario].historial.push({
-    fecha: new Date().toISOString().split("T")[0],
-    tipo: "CANJE",
-    articulo: articulo,
-    coins: valor
-  });
-
-  localStorage.setItem("baseCoins", JSON.stringify(baseCoins));
-  alert("Canje exitoso");
-  location.reload();
 }
