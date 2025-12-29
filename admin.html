@@ -5,21 +5,17 @@
   <title>Admin | AJE COINS</title>
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="center">
 
-<h1>Administrador AJE COINS</h1>
+<h2>Panel Admin</h2>
 
-<input type="file" id="excelFile" accept=".xlsx,.xls">
-<br><br>
+<input type="file" id="excelFile" accept=".xlsx">
 <button onclick="procesarExcel()">Procesar Excel</button>
 
 <p id="resultado"></p>
 
-<!-- ✅ XLSX LIBRERÍA -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-<!-- ✅ TU LÓGICA -->
+<!-- LIBRERÍA EXCEL -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 <script src="app.js"></script>
-
 </body>
 </html>
