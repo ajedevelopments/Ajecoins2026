@@ -1,26 +1,47 @@
 body {
-  font-family: Arial;
-  background: #f4fff7;
-  color: #0a6b3c;
+  font-family: Arial, sans-serif;
+  background: #f5fff5;
+  color: #1b5e20;
+}
+
+.center {
   text-align: center;
+  margin-top: 100px;
 }
 
 button {
-  background: #0a6b3c;
+  background: #2e7d32;
   color: white;
   border: none;
   padding: 10px 20px;
   margin: 10px;
   cursor: pointer;
+  border-radius: 5px;
+}
+
+button:hover {
+  background: #1b5e20;
+}
+
+input {
+  padding: 10px;
+  margin: 5px;
+  width: 200px;
 }
 
 .catalogo {
   display: flex;
-  justify-content: center;
   gap: 20px;
+  justify-content: center;
 }
 
 .item {
-  border: 1px solid #0a6b3c;
-  padding: 10px;
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.item img {
+  width: 100px;
 }
