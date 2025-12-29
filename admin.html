@@ -2,21 +2,19 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Admin | AJE COINS</title>
+  <title>Admin AJE COINS</title>
   <link rel="stylesheet" href="styles.css">
 </head>
-<body class="center">
+<body>
 
-  <h2>Panel Admin</h2>
+<h2>Admin – Cargar Excel</h2>
 
-  <input type="file" id="excelFile">
-  <button onclick="procesarExcel()">Procesar Excel</button>
+<input type="file" id="excelFile" accept=".xlsx">
+<button onclick="procesarExcel()">Procesar Excel</button>
 
-  <p id="resultado"></p>
+<p id="resultado"></p>
 
-  <button onclick="cerrarSesion()">Cerrar sesión</button>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
