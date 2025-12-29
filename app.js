@@ -40,15 +40,33 @@ function procesarExcel() {
     let baseCoins = {};
 
     rows.forEach(r => {
-      baseCoins[r.cedula] = {
-        coins_ganados: Number(r.coins),
-        coins_usados: 0,
-        coins_actuales: Number(r.coins)
-      };
+      const cedula = String(r.cedula);
+      const coins = Number(r.coins_ganados);
+
+      if (!baseCoins[cedula]) {
+        baseCoins[cedula] = {
+          cedula: cedula,
+          vendedor: r.vendedor,
+          cedis: r.cedis,
+          coins_ganados: 0,
+          coins_usados: 0,
+          coins_actuales: 0,
+          movimientos: []
+        };
+      }
+
+      baseCoins[cedula].coins_ganados += coins;
+      baseCoins[cedula].coins_actuales += coins;
+
+      baseCoins[cedula].movimientos.push({
+        fecha: r.fecha,
+        coins: coins
+      });
     });
 
     localStorage.setItem("baseCoins", JSON.stringify(baseCoins));
-    document.getElementById("resultado").innerText = "Excel cargado correctamente ✅";
+    document.getElementById("resultado").innerText =
+      "Excel cargado correctamente ✅ (" + Object.keys(baseCoins).length + " usuarios)";
   };
 
   reader.readAsArrayBuffer(file);
@@ -78,6 +96,11 @@ function canjear(valor) {
 
   baseCoins[usuario].coins_actuales -= valor;
   baseCoins[usuario].coins_usados += valor;
+
+  baseCoins[usuario].movimientos.push({
+    fecha: new Date().toISOString().split("T")[0],
+    coins: -valor
+  });
 
   localStorage.setItem("baseCoins", JSON.stringify(baseCoins));
   alert("Canje realizado con éxito 🪙");
