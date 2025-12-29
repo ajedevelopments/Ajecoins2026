@@ -1,40 +1,23 @@
 body {
-  font-family: Arial, sans-serif;
-  background: #111;
-  color: white;
-  text-align: center;
-}
-
-header {
-  background: #ff6a00;
+  font-family: Arial;
   padding: 20px;
+  background: #f5f5f5;
 }
 
-input {
-  display: block;
-  margin: 10px auto;
-  padding: 8px;
-  width: 200px;
-}
-
-button {
-  padding: 10px 15px;
-  background: #ff6a00;
-  border: none;
-  color: white;
-  cursor: pointer;
+h1 {
+  color: #f4b400;
 }
 
 .catalogo {
   display: flex;
-  justify-content: center;
   gap: 20px;
 }
 
 .item {
-  background: #222;
-  padding: 15px;
-  border-radius: 8px;
+  background: white;
+  padding: 10px;
+  border-radius: 10px;
+  text-align: center;
 }
 
 .item img {
