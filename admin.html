@@ -5,16 +5,18 @@
   <title>Admin | AJE COINS</title>
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="center">
 
-<h2>Subir Excel de Coins</h2>
+  <h2>Panel Admin</h2>
 
-<input type="file" id="excelFile">
-<button onclick="procesarExcel()">Procesar</button>
+  <input type="file" id="excelFile">
+  <button onclick="procesarExcel()">Procesar Excel</button>
 
-<p id="resultado"></p>
+  <p id="resultado"></p>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="app.js"></script>
+  <button onclick="cerrarSesion()">Cerrar sesión</button>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
