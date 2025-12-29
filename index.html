@@ -2,19 +2,25 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>AJE COINS | Login</title>
+  <title>AJE COINS</title>
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="center">
 
-<h1>AJE COINS</h1>
+  <h1>AJE COINS</h1>
+  <p>Selecciona cómo deseas ingresar</p>
 
-<div class="login-box">
-  <input type="text" id="user" placeholder="Usuario / Cédula">
-  <input type="password" id="pass" placeholder="Contraseña">
-  <button onclick="login()">Ingresar</button>
-</div>
+  <div class="login-box">
+    <button onclick="irLogin('admin')">Entrar como Admin</button>
+    <button onclick="irLogin('usuario')">Entrar como Usuario</button>
+  </div>
 
-<script src="app.js"></script>
+  <script>
+    function irLogin(tipo) {
+      localStorage.setItem("tipo_login", tipo);
+      window.location.href = "login.html";
+    }
+  </script>
+
 </body>
 </html>
