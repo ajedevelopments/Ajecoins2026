@@ -1,16 +1,16 @@
-// ===============================
+// =====================
 // LOGIN
-// ===============================
+// =====================
 function login() {
-  const user = document.getElementById("user").value;
-  const pass = document.getElementById("pass").value;
+  const user = document.getElementById("user").value.trim();
+  const pass = document.getElementById("pass").value.trim();
 
   if (user === "admin" && pass === "admin123") {
     window.location.href = "admin.html";
     return;
   }
 
-  if (user === pass && user !== "") {
+  if (user !== "" && user === pass) {
     localStorage.setItem("usuario_actual", user);
     window.location.href = "usuario.html";
     return;
@@ -19,13 +19,13 @@ function login() {
   alert("Credenciales incorrectas");
 }
 
-// ===============================
+// =====================
 // ADMIN - PROCESAR EXCEL
-// ===============================
+// =====================
 function procesarExcel() {
   const file = document.getElementById("excelFile").files[0];
   if (!file) {
-    alert("Selecciona un Excel");
+    alert("Selecciona un archivo Excel");
     return;
   }
 
@@ -38,68 +38,52 @@ function procesarExcel() {
     const rows = XLSX.utils.sheet_to_json(sheet);
 
     let baseCoins = {};
-    const tbody = document.querySelector("#tablaDatos tbody");
-    tbody.innerHTML = "";
 
     rows.forEach(r => {
-      if (!r.cedula) return;
-
       baseCoins[r.cedula] = {
         fecha: r.fecha,
-        cedula: r.cedula,
         vendedor: r.vendedor,
         cedis: r.cedis,
-        coins_ganados: Number(r.coins_ganados),
+        coins_ganados: r.coins_ganados,
         coins_usados: 0,
-        coins_actuales: Number(r.coins_ganados)
+        coins_actuales: r.coins_ganados
       };
-
-      // 🔹 pintar tabla
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${r.fecha || ""}</td>
-        <td>${r.cedula}</td>
-        <td>${r.vendedor || ""}</td>
-        <td>${r.cedis || ""}</td>
-        <td>${r.coins_ganados}</td>
-      `;
-      tbody.appendChild(tr);
     });
 
     localStorage.setItem("baseCoins", JSON.stringify(baseCoins));
+
+    mostrarTabla(rows);
+
     document.getElementById("resultado").innerText =
-      "Excel cargado correctamente. Registros: " + rows.length;
+      "Excel cargado y visualizado correctamente";
   };
 
   reader.readAsArrayBuffer(file);
 }
 
-// ===============================
-// USUARIO - MOSTRAR COINS
-// ===============================
-const usuario = localStorage.getItem("usuario_actual");
-const baseCoins = JSON.parse(localStorage.getItem("baseCoins")) || {};
+// =====================
+// MOSTRAR TABLA
+// =====================
+function mostrarTabla(rows) {
+  const thead = document.querySelector("#tablaExcel thead");
+  const tbody = document.querySelector("#tablaExcel tbody");
 
-if (usuario && baseCoins[usuario]) {
-  const p = document.getElementById("coins");
-  if (p) {
-    p.innerText = "Coins actuales: " + baseCoins[usuario].coins_actuales;
-  }
-}
+  thead.innerHTML = "";
+  tbody.innerHTML = "";
 
-// ===============================
-// CANJEAR
-// ===============================
-function canjear(valor) {
-  if (!baseCoins[usuario] || baseCoins[usuario].coins_actuales < valor) {
-    alert("No tienes coins suficientes");
-    return;
-  }
+  if (rows.length === 0) return;
 
-  baseCoins[usuario].coins_actuales -= valor;
-  baseCoins[usuario].coins_usados += valor;
+  const headers = Object.keys(rows[0]);
 
-  localStorage.setItem("baseCoins", JSON.stringify(baseCoins));
-  alert("Canje realizado con éxito");
-  location.reload();
+  let headerRow = "<tr>";
+  headers.forEach(h => headerRow += `<th>${h}</th>`);
+  headerRow += "</tr>";
+  thead.innerHTML = headerRow;
+
+  rows.forEach(row => {
+    let tr = "<tr>";
+    headers.forEach(h => tr += `<td>${row[h]}</td>`);
+    tr += "</tr>";
+    tbody.innerHTML += tr;
+  });
 }
