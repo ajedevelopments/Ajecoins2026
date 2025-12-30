@@ -135,7 +135,7 @@ document.getElementById("fileInput").addEventListener("change", function (e) {
 
 
 // ===================================================
-// 🔹 3. CARGA CSV DE PRODUCTOS (CATÁLOGO) ✅ NUEVO
+// 🔹 3. CARGA CSV DE PRODUCTOS (CATÁLOGO)
 // ===================================================
 const productosInput = document.getElementById("productosInput");
 const productosStatus = document.getElementById("productosStatus");
@@ -157,7 +157,8 @@ productosInput.addEventListener("change", function (e) {
             const row = lines[i].trim();
             if (!row) continue;
 
-            const cols = row.split(",");
+            // 🔹 AQUÍ ESTÁ LA CORRECCIÓN CLAVE
+            const cols = row.includes(";") ? row.split(";") : row.split(",");
             if (cols.length < 2) continue;
 
             const nombre = cols[0].trim();
