@@ -2,23 +2,31 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>AJE COINS - Usuario</title>
+    <title>AJE Coins - Usuario</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
 <div class="container">
     <h1>AJE COINS</h1>
-    <p>Ingresa tu número de cédula</p>
+    <p>Consulta tus puntos</p>
 
-    <input type="text" id="cedulaInput" placeholder="Cédula">
-    <br><br>
+    <input
+        type="text"
+        id="cedulaInput"
+        placeholder="Ingresa tu cédula"
+    >
 
-    <button class="btn" onclick="loginUsuario()">Ingresar</button>
+    <button id="btnConsultar">Consultar</button>
 
-    <p id="error" class="error"></p>
+    <div id="resultado" class="resultado"></div>
+
+    <br>
+    <a href="index.html">⬅ Volver al inicio</a>
 </div>
 
-<script src="usuario.js"></script>
+<!-- IMPORTANTE -->
+<script type="module" src="usuario.js"></script>
+
 </body>
 </html>
