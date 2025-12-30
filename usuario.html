@@ -118,14 +118,14 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
 import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
-// 🔹 Config Firebase
+// 🔹 Configuración Firebase con tu key
 const firebaseConfig = {
-    apiKey: "TU_API_KEY",
-    authDomain: "TU_AUTH_DOMAIN",
-    projectId: "TU_PROJECT_ID",
-    storageBucket: "TU_STORAGE_BUCKET",
-    messagingSenderId: "TU_SENDER_ID",
-    appId: "TU_APP_ID"
+    apiKey: "AIzaSyCsz2EP8IsTlG02uU2_GRfyQeeajMDuJjI",
+    authDomain: "ajecoins-73829.firebaseapp.com",
+    projectId: "ajecoins-73829",
+    storageBucket: "ajecoins-73829.firebasestorage.app",
+    messagingSenderId: "247461322350",
+    appId: "1:247461322350:web:802185ad39249ca650507f"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -157,14 +157,14 @@ function actualizarCarrito() {
     });
 }
 
-// 🔹 Función para mostrar usuario y productos
+// 🔹 Función principal para mostrar usuario y productos
 async function mostrarUsuario(cedula) {
-    infoUsuario.style.display = "none";
-    mensaje.innerText = "⏳ Cargando usuario...";
     tablaHistorialBody.innerHTML = "";
     productosContainer.innerHTML = "";
     listaCarrito.innerHTML = "";
     carrito = [];
+    mensaje.innerText = "⏳ Cargando usuario...";
+    infoUsuario.style.display = "none";
 
     try {
         const userRef = doc(db, "usuarios", cedula);
@@ -176,26 +176,26 @@ async function mostrarUsuario(cedula) {
         }
 
         const userData = userSnap.data();
-        nombreSpan.innerText = userData.nombre;
-        cedisSpan.innerText = userData.cedis;
+        nombreSpan.innerText = userData.nombre || "Sin nombre";
+        cedisSpan.innerText = userData.cedis || "Sin CEDIS";
 
-        // 🔹 Historial de movimientos
-        const movimientosSnap = await getDocs(collection(db, "usuarios", cedula, "movimientos"));
+        // Historial de movimientos
         let coinsActuales = 0;
+        const movimientosSnap = await getDocs(collection(db, "usuarios", cedula, "movimientos"));
 
         if (!movimientosSnap.empty) {
             movimientosSnap.forEach(mov => {
                 const data = mov.data();
                 const tr = document.createElement("tr");
                 tr.innerHTML = `
-                    <td>${data.fecha}</td>
-                    <td>${data.coins_ganados}</td>
-                    <td>${data.producto || ""}</td>
-                    <td>${data.coins_canjeados}</td>
-                    <td>${data.coins_actuales}</td>
+                    <td>${data.fecha || "-"}</td>
+                    <td>${data.coins_ganados || 0}</td>
+                    <td>${data.producto || "-"}</td>
+                    <td>${data.coins_canjeados || 0}</td>
+                    <td>${data.coins_actuales || 0}</td>
                 `;
                 tablaHistorialBody.appendChild(tr);
-                coinsActuales = data.coins_actuales;
+                coinsActuales = data.coins_actuales || coinsActuales;
             });
         }
 
@@ -203,40 +203,40 @@ async function mostrarUsuario(cedula) {
         infoUsuario.style.display = "block";
         mensaje.innerText = "";
 
-        // 🔹 Mostrar productos
+        // Productos disponibles
         const productosSnap = await getDocs(collection(db, "productos"));
         productosSnap.forEach(docSnap => {
             const producto = docSnap.data();
             const card = document.createElement("div");
             card.classList.add("producto-card");
             card.innerHTML = `
-                <img src="${producto.imagen}" alt="${producto.nombre}" class="producto-img" />
-                <h3 class="producto-nombre">${producto.nombre}</h3>
-                <p class="producto-coins">${producto.coins} coins</p>
-                <button class="btn-agregar" data-id="${docSnap.id}" data-nombre="${producto.nombre}" data-coins="${producto.coins}">
+                <img src="${producto.imagen || 'assets/productos/default.png'}" alt="${producto.nombre || 'Producto'}" class="producto-img" />
+                <h3 class="producto-nombre">${producto.nombre || 'Producto'}</h3>
+                <p class="producto-coins">${producto.coins || 0} coins</p>
+                <button class="btn-agregar" data-nombre="${producto.nombre}" data-coins="${producto.coins}">
                     + Agregar
                 </button>
             `;
             productosContainer.appendChild(card);
         });
 
-        // 🔹 Botones agregar al carrito
+        // Agregar al carrito
         productosContainer.querySelectorAll(".btn-agregar").forEach(btn => {
             btn.addEventListener("click", () => {
                 const nombre = btn.dataset.nombre;
-                const coins = Number(btn.dataset.coins);
+                const coins = Number(btn.dataset.coins) || 0;
                 carrito.push({ nombre, coins });
                 actualizarCarrito();
             });
         });
 
-    } catch (error) {
-        console.error(error);
+    } catch (err) {
+        console.error(err);
         mensaje.innerText = "❌ Error al cargar usuario.";
     }
 }
 
-// 🔹 Event listener buscar
+// 🔹 Event listener para botón buscar
 buscarBtn.addEventListener("click", () => {
     const cedula = cedulaInput.value.trim();
     if (cedula) mostrarUsuario(cedula);
@@ -244,4 +244,3 @@ buscarBtn.addEventListener("click", () => {
 </script>
 </body>
 </html>
-
