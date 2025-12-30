@@ -15,15 +15,24 @@
     <input type="file" id="fileInput" accept=".csv">
     <p id="status"></p>
 
+    <h3>Registros cargados</h3>
+    <table id="tablaDatos">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Cédula</th>
+                <th>Nombre</th>
+                <th>CEDIS</th>
+                <th>Coins</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
     <br>
     <a href="index.html">⬅ Volver al inicio</a>
 </div>
 
-<!-- 🔥 PRIMERO Firebase -->
-<script type="module" src="firebase.js"></script>
-
-<!-- 🧠 LUEGO tu lógica -->
 <script type="module" src="admin.js"></script>
-
 </body>
 </html>
