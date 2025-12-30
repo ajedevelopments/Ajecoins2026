@@ -16,6 +16,7 @@ body {
     margin: 10px;
     text-decoration: none;
     border-radius: 8px;
+    display: inline-block;
 }
 
 input, button {
@@ -27,7 +28,8 @@ input, button {
     background: white;
     padding: 20px;
     border-radius: 10px;
-    max-width: 400px;
+    display: inline-block;
+    margin-top: 20px;
 }
 
 .logo {
