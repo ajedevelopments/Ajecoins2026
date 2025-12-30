@@ -7,43 +7,18 @@
 </head>
 <body>
 
-    <div class="container">
-        <h1>Panel Administrador</h1>
+<div class="container">
+    <h1>Panel Administrador</h1>
 
-        <p>Sube el archivo CSV con los coins ganados</p>
+    <p>Sube el archivo CSV con los coins ganados</p>
 
-        <input type="file" id="fileInput" accept=".csv">
-        <br><br>
-        <button onclick="procesarCSV()">Subir archivo</button>
+    <input type="file" id="fileInput" accept=".csv">
+    <p id="status"></p>
 
-        <p id="mensaje"></p>
+    <br>
+    <a href="index.html">⬅ Volver al inicio</a>
+</div>
 
-        <br>
-        <a href="index.html">⬅ Volver al inicio</a>
-    </div>
-
-    <script>
-        function procesarCSV() {
-            const fileInput = document.getElementById("fileInput");
-            const mensaje = document.getElementById("mensaje");
-
-            if (!fileInput.files.length) {
-                mensaje.innerText = "⚠️ Selecciona un archivo CSV";
-                return;
-            }
-
-            const file = fileInput.files[0];
-            const reader = new FileReader();
-
-            reader.onload = function (e) {
-                const contenido = e.target.result;
-                localStorage.setItem("aje_coins_data", contenido);
-                mensaje.innerText = "✅ Archivo cargado correctamente";
-            };
-
-            reader.readAsText(file);
-        }
-    </script>
-
+<script src="admin.js"></script>
 </body>
 </html>
