@@ -7,7 +7,7 @@ import {
     getDoc
 } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
-// 🔹 Configuración Firebase (la tuya)
+// 🔹 Configuración Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyCsz2EP8IsTlG02uU2_GRfyQeeajMDuJjI",
     authDomain: "ajecoins-73829.firebaseapp.com",
@@ -22,7 +22,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // 🔹 Leer CSV y guardar en Firestore
-document.getElementById("fileInput").addEventListener("change", async function (e) {
+document.getElementById("fileInput").addEventListener("change", function (e) {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -30,29 +30,33 @@ document.getElementById("fileInput").addEventListener("change", async function (
 
     reader.onload = async function (event) {
         const text = event.target.result;
-        const lines = text.split("\n");
+        const lines = text.split(/\r?\n/);
 
         let contador = 0;
 
-        // Empieza en 1 para saltar encabezado
         for (let i = 1; i < lines.length; i++) {
             const row = lines[i].trim();
             if (!row) continue;
 
-            const cols = row.split(",");
+            // ✅ Detectar separador
+            const cols = row.includes(";")
+                ? row.split(";")
+                : row.split(",");
 
-            const fecha = cols[0];
+            if (cols.length < 5) continue;
+
+            const fechaRaw = cols[0];
             const cedula = cols[1];
             const nombre = cols[2];
             const cedis = cols[3];
             const coinsGanados = Number(cols[4]);
 
-            if (!cedula || !fecha) continue;
+            if (!cedula || isNaN(coinsGanados)) continue;
 
-            // 🔹 Ruta:
-            // usuarios/{cedula}/movimientos/{fecha}
-            const ref = doc(db, "usuarios", cedula, "movimientos", fecha);
+            // ✅ Limpiar fecha para ID Firestore
+            const fechaId = fechaRaw.replace(/\//g, "-");
 
+            const ref = doc(db, "usuarios", cedula, "movimientos", fechaId);
             const existente = await getDoc(ref);
 
             let coinsActuales = coinsGanados;
@@ -63,10 +67,10 @@ document.getElementById("fileInput").addEventListener("change", async function (
             }
 
             await setDoc(ref, {
-                fecha: fecha,
-                cedula: cedula,
-                nombre: nombre,
-                cedis: cedis,
+                fecha: fechaRaw,
+                cedula,
+                nombre,
+                cedis,
                 coins_ganados: coinsGanados,
                 producto: "",
                 coins_canjeados: 0,
