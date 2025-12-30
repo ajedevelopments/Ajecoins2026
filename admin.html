@@ -1,22 +1,19 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Admin | AJE COINS</title>
-  <link rel="stylesheet" href="styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <meta charset="UTF-8">
+    <title>Admin - AJE COINS</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="center">
-    <h1>Panel Administrador</h1>
-    <input type="file" id="excelFile" accept=".xlsx,.xls">
-    <br>
-    <button id="procesarBtn">Procesar Excel</button>
-    <p id="resultado"></p>
-  </div>
-  <div class="tabla-container">
-    <table id="tablaExcel"><thead></thead><tbody></tbody></table>
-  </div>
-  <script src="admin.js"></script>
+
+<h2>Panel Admin</h2>
+
+<input type="file" id="fileInput" accept=".csv">
+<button onclick="procesarCSV()">Subir archivo</button>
+
+<p id="mensaje"></p>
+
+<script src="admin.js"></script>
 </body>
 </html>
