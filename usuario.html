@@ -8,25 +8,38 @@
 <body>
 
 <div class="container">
-    <h1>AJE COINS</h1>
-    <p>Consulta tus puntos</p>
+    <h1>Consulta tus AJE Coins</h1>
 
-    <input
-        type="text"
-        id="cedulaInput"
-        placeholder="Ingresa tu cédula"
-    >
+    <input type="text" id="cedulaInput" placeholder="Ingresa tu cédula">
+    <button id="buscarBtn">Buscar</button>
 
-    <button id="btnConsultar">Consultar</button>
+    <p id="mensaje"></p>
 
-    <div id="resultado" class="resultado"></div>
+    <div id="infoUsuario" style="display:none;">
+        <h3>Datos del usuario</h3>
+        <p><strong>Nombre:</strong> <span id="nombre"></span></p>
+        <p><strong>CEDIS:</strong> <span id="cedis"></span></p>
+        <p><strong>Coins actuales:</strong> <span id="coinsActuales"></span></p>
+
+        <h3>Historial</h3>
+        <table id="tablaHistorial">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Coins ganados</th>
+                    <th>Producto</th>
+                    <th>Coins canjeados</th>
+                    <th>Saldo</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
 
     <br>
     <a href="index.html">⬅ Volver al inicio</a>
 </div>
 
-<!-- IMPORTANTE -->
 <script type="module" src="usuario.js"></script>
-
 </body>
 </html>
