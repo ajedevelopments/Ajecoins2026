@@ -25,14 +25,13 @@ const status = document.getElementById("status");
 
 
 // ===================================================
-// 🔹 1. CARGAR DATOS EXISTENTES AL ENTRAR AL ADMIN
+// 🔹 1. CARGAR DATOS EXISTENTES
 // ===================================================
 async function cargarDatosExistentes() {
     tablaBody.innerHTML = "";
     status.innerText = "⏳ Cargando datos existentes...";
 
     const usuariosSnap = await getDocs(collection(db, "usuarios"));
-
     let total = 0;
 
     for (const userDoc of usuariosSnap.docs) {
@@ -65,23 +64,21 @@ async function cargarDatosExistentes() {
             : "ℹ️ No hay datos cargados aún";
 }
 
-// 🔹 Ejecutar automáticamente
 cargarDatosExistentes();
 
 
 // ===================================================
-// 🔹 2. CARGA DE CSV (ADMIN)
+// 🔹 2. CARGA CSV DE COINS (USUARIOS)
 // ===================================================
 document.getElementById("fileInput").addEventListener("change", function (e) {
     const file = e.target.files[0];
     if (!file) return;
 
-    tablaBody.innerHTML = ""; // limpiar tabla
+    tablaBody.innerHTML = "";
     const reader = new FileReader();
 
     reader.onload = async function (event) {
-        const text = event.target.result;
-        const lines = text.split(/\r?\n/);
+        const lines = event.target.result.split(/\r?\n/);
         let contador = 0;
 
         for (let i = 1; i < lines.length; i++) {
@@ -100,14 +97,12 @@ document.getElementById("fileInput").addEventListener("change", function (e) {
 
             if (!cedula || isNaN(coins)) continue;
 
-            // 🔹 Usuario (datos fijos)
             await setDoc(
                 doc(db, "usuarios", cedula),
                 { cedula, nombre, cedis },
                 { merge: true }
             );
 
-            // 🔹 Movimiento POR FECHA (sobrescribe)
             await setDoc(
                 doc(db, "usuarios", cedula, "movimientos", fechaId),
                 {
@@ -119,7 +114,6 @@ document.getElementById("fileInput").addEventListener("change", function (e) {
                 }
             );
 
-            // 🔹 Mostrar en tabla
             const tr = document.createElement("tr");
             tr.innerHTML = `
                 <td>${fechaRaw}</td>
@@ -133,8 +127,66 @@ document.getElementById("fileInput").addEventListener("change", function (e) {
             contador++;
         }
 
-        status.innerText =
-            `✅ Archivo cargado. Registros procesados: ${contador}`;
+        status.innerText = `✅ Archivo cargado. Registros procesados: ${contador}`;
+    };
+
+    reader.readAsText(file);
+});
+
+
+// ===================================================
+// 🔹 3. CARGA CSV DE PRODUCTOS (CATÁLOGO) ✅ NUEVO
+// ===================================================
+const productosInput = document.getElementById("productosInput");
+const productosStatus = document.getElementById("productosStatus");
+const tablaProductosBody = document.querySelector("#tablaProductos tbody");
+
+productosInput.addEventListener("change", function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    tablaProductosBody.innerHTML = "";
+
+    const reader = new FileReader();
+
+    reader.onload = async function (event) {
+        const lines = event.target.result.split(/\r?\n/);
+        let contador = 0;
+
+        for (let i = 1; i < lines.length; i++) {
+            const row = lines[i].trim();
+            if (!row) continue;
+
+            const cols = row.split(",");
+            if (cols.length < 2) continue;
+
+            const nombre = cols[0].trim();
+            const coins = Number(cols[1]);
+
+            if (!nombre || isNaN(coins)) continue;
+
+            const id = nombre.toLowerCase().replace(/\s+/g, "_");
+            const imagen = `assets/productos/${id}.png`;
+
+            await setDoc(doc(db, "productos", id), {
+                nombre,
+                coins,
+                imagen,
+                activo: true
+            });
+
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${nombre}</td>
+                <td>${coins}</td>
+                <td><img src="${imagen}" width="50"></td>
+            `;
+            tablaProductosBody.appendChild(tr);
+
+            contador++;
+        }
+
+        productosStatus.innerText = `🛒 Productos cargados: ${contador}`;
     };
 
     reader.readAsText(file);
