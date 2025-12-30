@@ -187,7 +187,7 @@ productosInput.addEventListener("change", function (e) {
             if (!nombre || isNaN(coins)) continue;
 
             const id = nombre.toLowerCase().replace(/\s+/g, "_");
-            const imagen = `assets/productos/${id}.jpg`; // Cambiado a jpg
+            const imagen = `assets/productos/${id}.png`; // Cambiado a jpg
 
             await setDoc(doc(db, "productos", id), {
                 nombre,
