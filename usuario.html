@@ -2,306 +2,240 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>AJE Coins - Usuario</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AJE Coins</title>
 
 <style>
-/* ====== RESET ====== */
-* { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-
-/* ====== GENERAL ====== */
+/* ===== MOBILE FIRST ===== */
 body {
-    background: #f4f6f8;
     margin: 0;
-    padding: 0;
+    background: #f2f2f2;
+    font-family: system-ui, -apple-system;
 }
 
-.container {
-    max-width: 420px;
+.app {
+    max-width: 430px;
     margin: auto;
     background: #fff;
     min-height: 100vh;
-    padding: 20px;
 }
 
-/* ====== HEADER ====== */
-h1 {
+/* HEADER */
+.header {
+    background: #00a651;
+    color: #fff;
+    padding: 15px;
     text-align: center;
-    color: #00a651;
-    margin-bottom: 15px;
+    font-weight: bold;
 }
 
-/* ====== INPUT ====== */
+/* CONTENT */
+.content {
+    padding: 15px;
+}
+
+/* INPUT */
 input {
     width: 100%;
     padding: 12px;
-    border-radius: 10px;
+    border-radius: 12px;
     border: 1px solid #ddd;
     margin-bottom: 10px;
-    font-size: 15px;
 }
 
 button {
     width: 100%;
     padding: 12px;
-    border-radius: 12px;
+    border-radius: 14px;
     border: none;
     background: #00a651;
     color: #fff;
     font-weight: bold;
     font-size: 15px;
-    cursor: pointer;
 }
 
-button:hover { background: #008f44; }
-
-/* ====== ALERTAS ====== */
-#alertaCoins {
-    display: none;
-    background: #ff4d4d;
-    color: #fff;
-    padding: 10px;
-    border-radius: 10px;
-    text-align: center;
-    margin: 10px 0;
-}
-
-/* ====== USER INFO ====== */
+/* CARDS */
 .card {
-    background: #f9f9f9;
-    border-radius: 16px;
+    background: #fff;
+    border-radius: 18px;
     padding: 15px;
     margin-bottom: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,.08);
 }
 
-.card h3 { margin-top: 0; }
-
-/* ====== PRODUCTS ====== */
-#productosContainer {
+/* PRODUCTS */
+.products {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2,1fr);
     gap: 12px;
 }
 
-.producto-card {
-    background: #fff;
-    border-radius: 18px;
+.product {
+    background: #fafafa;
+    border-radius: 16px;
     padding: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
     text-align: center;
 }
 
-.producto-card img {
-    width: 100%;
-    height: 90px;
+.product img {
+    height: 80px;
     object-fit: contain;
 }
 
-.producto-card h4 {
-    font-size: 14px;
-    margin: 6px 0;
-}
-
-.producto-card p {
-    font-size: 13px;
-    color: #666;
-}
-
-.btn-agregar {
-    background: #00a651;
-    border-radius: 20px;
-    padding: 6px;
-    margin-top: 5px;
-    font-size: 13px;
-}
-
-/* ====== CARRITO ====== */
-#carrito {
+/* CART */
+.cart {
     position: sticky;
     bottom: 0;
     background: #fff;
-    border-top: 1px solid #ddd;
     padding: 10px;
-    margin-top: 15px;
+    border-top: 1px solid #eee;
 }
 
-#listaCarrito li {
-    list-style: none;
-    font-size: 14px;
-    margin-bottom: 6px;
-}
-
-.cantidad-btn {
-    background: #00a651;
-    border-radius: 6px;
-    padding: 2px 6px;
-    margin: 0 4px;
-    font-size: 12px;
-}
-
-/* ====== HISTORIAL ====== */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-}
-
-th, td {
-    padding: 6px;
-    border-bottom: 1px solid #eee;
-}
-
-/* ====== FOOTER ====== */
-.volver {
-    display: block;
+/* ALERT */
+.alert {
+    background: #ff4d4d;
+    color: #fff;
+    padding: 10px;
+    border-radius: 12px;
     text-align: center;
-    margin-top: 15px;
-    text-decoration: none;
+    display: none;
+}
+
+/* LINK */
+.link {
+    text-align: center;
     color: #00a651;
     font-weight: bold;
+    margin-top: 10px;
 }
 </style>
 </head>
 
 <body>
-<div class="container">
+<div class="app">
 
-<h1>AJE Coins</h1>
+<div class="header">AJE Coins</div>
 
-<input id="cedulaInput" placeholder="Ingresa tu cédula">
-<button id="buscarBtn">Buscar</button>
+<div class="content">
+    <input id="cedula" placeholder="Ingresa tu cédula">
+    <button id="buscar">Buscar</button>
 
-<div id="alertaCoins"></div>
+    <div id="alert" class="alert"></div>
 
-<div id="infoUsuario" style="display:none;">
+    <div id="vistaUsuario" style="display:none">
 
-<div class="card">
-    <h3>👤 Usuario</h3>
-    <p><b>Nombre:</b> <span id="nombre"></span></p>
-    <p><b>CEDIS:</b> <span id="cedis"></span></p>
-    <p><b>Coins disponibles:</b> <span id="coinsActuales"></span></p>
+        <div class="card">
+            <b id="nombre"></b><br>
+            Coins disponibles: <b id="coins"></b>
+        </div>
+
+        <div class="card">
+            <h4>Productos</h4>
+            <div id="productos" class="products"></div>
+        </div>
+
+        <div class="card">
+            <button id="verSolicitudes">🧾 Mis productos solicitados</button>
+        </div>
+
+    </div>
 </div>
 
-<div class="card">
-    <h3>🎁 Productos</h3>
-    <div id="productosContainer"></div>
+<div class="cart" id="carrito" style="display:none">
+    <div id="lista"></div>
+    <button id="solicitar">Solicitar productos</button>
 </div>
 
-<div class="card">
-    <h3>📜 Historial</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Fecha</th>
-                <th>Producto</th>
-                <th>Coins</th>
-                <th>Saldo</th>
-            </tr>
-        </thead>
-        <tbody id="tablaHistorial"></tbody>
-    </table>
-</div>
-
-<div id="carrito">
-    <ul id="listaCarrito"></ul>
-    <button id="btnSolicitar">Solicitar productos</button>
-</div>
-
-</div>
-
-<a class="volver" href="index.html">⬅ Volver</a>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-import { getFirestore, doc, getDoc, getDocs, setDoc, collection } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, getDocs, setDoc, addDoc, collection } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
 const app = initializeApp({
-    apiKey: "AIzaSyCsz2EP8IsTlG02uU2_GRfyQeeajMDuJjI",
-    authDomain: "ajecoins-73829.firebaseapp.com",
-    projectId: "ajecoins-73829"
+  apiKey: "AIzaSyCsz2EP8IsTlG02uU2_GRfyQeeajMDuJjI",
+  projectId: "ajecoins-73829"
 });
 
 const db = getFirestore(app);
 
-const cedulaInput = document.getElementById("cedulaInput");
-const buscarBtn = document.getElementById("buscarBtn");
-const alerta = document.getElementById("alertaCoins");
-
-const nombre = document.getElementById("nombre");
-const cedis = document.getElementById("cedis");
-const coinsSpan = document.getElementById("coinsActuales");
-
-const productosContainer = document.getElementById("productosContainer");
-const listaCarrito = document.getElementById("listaCarrito");
-const historialBody = document.getElementById("tablaHistorial");
-const btnSolicitar = document.getElementById("btnSolicitar");
-
 let coinsUsuario = 0;
 let carrito = [];
+let cedulaGlobal = "";
 
-function mostrarAlerta(txt) {
-    alerta.innerText = txt;
-    alerta.style.display = "block";
-    setTimeout(()=> alerta.style.display="none",3000);
-}
-
-function actualizarCarrito() {
-    listaCarrito.innerHTML = "";
-    let total = 0;
-
-    carrito.forEach((p,i)=>{
-        total += p.coins * p.cantidad;
-        const li = document.createElement("li");
-        li.innerHTML = `${p.nombre} (${p.cantidad}) - ${p.coins*p.cantidad}
-        <button class="cantidad-btn" onclick="mod(${i},1)">+</button>
-        <button class="cantidad-btn" onclick="mod(${i},-1)">-</button>`;
-        listaCarrito.appendChild(li);
-    });
-
-    coinsSpan.innerText = coinsUsuario - total;
-}
-
-window.mod = (i, v)=>{
-    if (v === 1 && carrito.reduce((s,p)=>s+p.coins*p.cantidad,0)+carrito[i].coins > coinsUsuario)
-        return mostrarAlerta("❌ Coins insuficientes");
-    carrito[i].cantidad += v;
-    if (carrito[i].cantidad <= 0) carrito.splice(i,1);
-    actualizarCarrito();
+const alert = msg => {
+    const a = document.getElementById("alert");
+    a.innerText = msg;
+    a.style.display = "block";
+    setTimeout(()=>a.style.display="none",3000);
 };
 
-buscarBtn.onclick = async ()=>{
-    const ced = cedulaInput.value.trim();
-    const u = await getDoc(doc(db,"usuarios",ced));
-    if (!u.exists()) return mostrarAlerta("Usuario no encontrado");
+document.getElementById("buscar").onclick = async ()=>{
+    cedulaGlobal = document.getElementById("cedula").value;
+    const snap = await getDoc(doc(db,"usuarios",cedulaGlobal));
+    if (!snap.exists()) return alert("Usuario no encontrado");
 
-    const d = u.data();
-    coinsUsuario = d.coins_actuales ?? 0;
+    const u = snap.data();
+    coinsUsuario = u.coins_actuales;
 
-    nombre.innerText = d.nombre;
-    cedis.innerText = d.cedis;
-    coinsSpan.innerText = coinsUsuario;
+    document.getElementById("nombre").innerText = u.nombre;
+    document.getElementById("coins").innerText = coinsUsuario;
 
-    productosContainer.innerHTML = "";
+    document.getElementById("vistaUsuario").style.display="block";
+    document.getElementById("carrito").style.display="block";
+
+    const cont = document.getElementById("productos");
+    cont.innerHTML = "";
+
     const ps = await getDocs(collection(db,"productos"));
     ps.forEach(p=>{
-        const pr = p.data();
+        const d = p.data();
         const div = document.createElement("div");
-        div.className="producto-card";
-        div.innerHTML = `<img src="${pr.imagen||''}">
-        <h4>${pr.nombre}</h4>
-        <p>${pr.coins} coins</p>
-        <button class="btn-agregar">Agregar</button>`;
+        div.className="product";
+        div.innerHTML = `
+            <img src="${d.imagen||''}">
+            <b>${d.nombre}</b>
+            <p>${d.coins} coins</p>
+            <button>Agregar</button>
+        `;
         div.querySelector("button").onclick=()=>{
-            const t = carrito.reduce((s,x)=>s+x.coins*x.cantidad,0);
-            if (t+pr.coins > coinsUsuario) return mostrarAlerta("❌ Coins insuficientes");
-            const ex = carrito.find(x=>x.nombre===pr.nombre);
-            ex ? ex.cantidad++ : carrito.push({nombre:pr.nombre,coins:pr.coins,cantidad:1});
-            actualizarCarrito();
+            if (d.coins > coinsUsuario) return alert("Coins insuficientes");
+            carrito.push({nombre:d.nombre,coins:d.coins,cantidad:1});
+            renderCarrito();
         };
-        productosContainer.appendChild(div);
+        cont.appendChild(div);
+    });
+};
+
+function renderCarrito(){
+    const l = document.getElementById("lista");
+    l.innerHTML="";
+    let total=0;
+    carrito.forEach(p=>{
+        total+=p.coins;
+        l.innerHTML+=`• ${p.nombre} (${p.coins})<br>`;
+    });
+    document.getElementById("coins").innerText = coinsUsuario - total;
+}
+
+document.getElementById("solicitar").onclick = async ()=>{
+    if (!carrito.length) return alert("Carrito vacío");
+
+    const total = carrito.reduce((s,p)=>s+p.coins,0);
+
+    await addDoc(collection(db,"usuarios",cedulaGlobal,"solicitudes"),{
+        fecha: new Date().toISOString(),
+        estado: "pendiente",
+        productos: carrito,
+        total_coins: total
     });
 
-    document.getElementById("infoUsuario").style.display="block";
+    await setDoc(doc(db,"usuarios",cedulaGlobal),{
+        coins_actuales: coinsUsuario - total
+    },{merge:true});
+
+    alert("✅ Productos solicitados");
+    carrito=[];
 };
 </script>
 </body>
