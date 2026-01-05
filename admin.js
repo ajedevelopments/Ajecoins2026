@@ -29,17 +29,14 @@ uploadBtn.addEventListener("click", async () => {
   const text = await file.text();
   const lines = text.trim().split("\n").slice(1);
   for (const line of lines) {
-    const [fecha, cedula, nombre, cedis, coins_ganados] = line.split(",");
-    await addDoc(collection(db, "usuarios"), {
-      fecha: fecha.trim(),
-      cedula: cedula.trim(),
-      nombre: nombre.trim(),
-      cedis: cedis.trim(),
-      coins_ganados: parseInt(coins_ganados.trim(), 10)
+    const [producto, coins] = line.split(",");
+    await addDoc(collection(db, "productos"), {
+      producto: producto.trim(),
+      coins: parseInt(coins.trim(), 10)
     });
   }
   alert("Archivo cargado");
-  loadUsers();
+  loadProducts();
 });
 
 async function loadUsers() {
@@ -66,7 +63,7 @@ async function loadProducts() {
     productsBody.innerHTML += `
       <tr>
         <td>${p.producto}</td>
-        <td><img src="assets/productos/${p.imagen}" alt="${p.producto}"/></td>
+        <td><img src="assets/productos/${p.producto}.png" alt="${p.producto}" onerror="this.src='assets/productos/${p.producto}.jpg'"/></td>
         <td>${p.coins}</td>
       </tr>`;
   });
