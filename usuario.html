@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AjeCoins - Usuario</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <h1>AjeCoins - Usuario</h1>
+
+  <!-- 🔐 Login con cédula -->
+  <section id="login">
+    <label>Ingresa tu cédula:</label>
+    <input type="text" id="cedulaInput" placeholder="12345678">
+    <button onclick="login()">Ingresar</button>
+  </section>
+
+  <!-- 👤 Info del usuario -->
+  <section id="userInfo" style="display:none;">
+    <h2>Bienvenido, <span id="userNombre"></span></h2>
+    <p><strong>Cédula:</strong> <span id="userCedula"></span></p>
+    <p><strong>CEDIS:</strong> <span id="userCedis"></span></p>
+    <p><strong>Coins disponibles:</strong> <span id="userCoins">0</span></p>
+  </section>
+
+  <!-- 🛍️ Productos -->
+  <section id="productos" style="display:none;">
+    <h2>Productos disponibles</h2>
+    <div id="productosList"></div>
+  </section>
+
+  <!-- 🛒 Carrito -->
+  <section id="carrito" style="display:none;">
+    <h2>Carrito</h2>
+    <ul id="carritoList"></ul>
+    <button onclick="solicitarProductos()">Solicitar productos</button>
+  </section>
+
+  <!-- 📦 Historial -->
+  <section id="historial" style="display:none;">
+    <h2>Historial de solicitudes</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Productos</th>
+          <th>Coins gastados</th>
+        </tr>
+      </thead>
+      <tbody id="historialBody"></tbody>
+    </table>
+  </section>
+
+  <script type="module" src="usuario.js"></script>
+</body>
+</html>
