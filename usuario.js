@@ -78,13 +78,32 @@ async function cargarProductos() {
   tiendaDiv.innerHTML = '';
   snap.forEach(doc => {
     const p = doc.data();
+
+    // tarjeta
     const tarj = document.createElement('div');
     tarj.className = 'tarjeta';
-    tarj.innerHTML = `
-      <img src="assets/productos/${p.producto}.png" onerror="this.src='assets/productos/${p.producto}.jpg'">
-      <h4>${p.producto}</h4>
-      <div class="precio">${p.coins} coins</div>
-      <button onclick="agregarAlCarrito('${p.producto}', ${p.coins})">Agregar</button>`;
+
+    // imagen
+    const img = document.createElement('img');
+    img.src = `assets/productos/${p.producto}.png`;
+    img.onerror = () => img.src = `assets/productos/${p.producto}.jpg`;
+
+    // nombre
+    const h4 = document.createElement('h4');
+    h4.textContent = p.producto;
+
+    // precio
+    const precioDiv = document.createElement('div');
+    precioDiv.className = 'precio';
+    precioDiv.textContent = `${p.coins} coins`;
+
+    // botón agregar
+    const btn = document.createElement('button');
+    btn.textContent = 'Agregar';
+    btn.onclick = () => agregarAlCarrito(p.producto, p.coins);
+
+    // ensamblar
+    tarj.append(img, h4, precioDiv, btn);
     tiendaDiv.appendChild(tarj);
   });
 }
