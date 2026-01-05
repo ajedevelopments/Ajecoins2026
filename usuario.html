@@ -18,8 +18,6 @@
   <section id="cuenta" class="card hidden">
     <h2>Mi tienda</h2>
     <p id="coins" class="coins"></p>
-
-    <!-- DATOS DEL USUARIO -->
     <ul id="datos" class="datos"></ul>
 
     <div id="productosTienda" class="tienda"></div>
@@ -29,5 +27,17 @@
 
     <button id="cerrarBtn">Cerrar</button>
   </section>
+
+  <!-- MODAL Y TOAST -->
+  <div id="modalFin" class="modal hidden">
+    <div class="modal-content">
+      <h3>Resumen</h3>
+      <ul id="resumenList"></ul>
+      <p id="totalFin"></p>
+      <button onclick="confirmarCompra()">Confirmar</button>
+      <button onclick="cerrarModal()">Cancelar</button>
+    </div>
+  </div>
+  <div id="toast" class="toast hidden">✓ Compra realizada</div>
 </body>
 </html>
