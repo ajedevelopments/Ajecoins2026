@@ -31,7 +31,7 @@ const bolsaSpan   = document.getElementById('bolsa');
 // ---------- VARIABLES ----------
 let coinsUsuario = 0;
 let carrito = [];
-let userId = '';      // ID del doc usuario
+let userId = '';
 
 // ---------- EVENTOS ----------
 ingresarBtn.addEventListener('click', buscarUsuario);
