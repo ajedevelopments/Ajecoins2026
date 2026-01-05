@@ -3,185 +3,305 @@
 <head>
 <meta charset="UTF-8">
 <title>AJE Coins - Usuario</title>
-<link rel="stylesheet" href="styles.css">
+
+<style>
+/* ====== RESET ====== */
+* { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+
+/* ====== GENERAL ====== */
+body {
+    background: #f4f6f8;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 420px;
+    margin: auto;
+    background: #fff;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* ====== HEADER ====== */
+h1 {
+    text-align: center;
+    color: #00a651;
+    margin-bottom: 15px;
+}
+
+/* ====== INPUT ====== */
+input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    margin-bottom: 10px;
+    font-size: 15px;
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: none;
+    background: #00a651;
+    color: #fff;
+    font-weight: bold;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+button:hover { background: #008f44; }
+
+/* ====== ALERTAS ====== */
+#alertaCoins {
+    display: none;
+    background: #ff4d4d;
+    color: #fff;
+    padding: 10px;
+    border-radius: 10px;
+    text-align: center;
+    margin: 10px 0;
+}
+
+/* ====== USER INFO ====== */
+.card {
+    background: #f9f9f9;
+    border-radius: 16px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.card h3 { margin-top: 0; }
+
+/* ====== PRODUCTS ====== */
+#productosContainer {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.producto-card {
+    background: #fff;
+    border-radius: 18px;
+    padding: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    text-align: center;
+}
+
+.producto-card img {
+    width: 100%;
+    height: 90px;
+    object-fit: contain;
+}
+
+.producto-card h4 {
+    font-size: 14px;
+    margin: 6px 0;
+}
+
+.producto-card p {
+    font-size: 13px;
+    color: #666;
+}
+
+.btn-agregar {
+    background: #00a651;
+    border-radius: 20px;
+    padding: 6px;
+    margin-top: 5px;
+    font-size: 13px;
+}
+
+/* ====== CARRITO ====== */
+#carrito {
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+    border-top: 1px solid #ddd;
+    padding: 10px;
+    margin-top: 15px;
+}
+
+#listaCarrito li {
+    list-style: none;
+    font-size: 14px;
+    margin-bottom: 6px;
+}
+
+.cantidad-btn {
+    background: #00a651;
+    border-radius: 6px;
+    padding: 2px 6px;
+    margin: 0 4px;
+    font-size: 12px;
+}
+
+/* ====== HISTORIAL ====== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+th, td {
+    padding: 6px;
+    border-bottom: 1px solid #eee;
+}
+
+/* ====== FOOTER ====== */
+.volver {
+    display: block;
+    text-align: center;
+    margin-top: 15px;
+    text-decoration: none;
+    color: #00a651;
+    font-weight: bold;
+}
+</style>
 </head>
 
 <body>
 <div class="container">
-<h1>Consulta tus AJE Coins</h1>
 
-<input type="text" id="cedulaInput" placeholder="Ingresa tu cédula">
+<h1>AJE Coins</h1>
+
+<input id="cedulaInput" placeholder="Ingresa tu cédula">
 <button id="buscarBtn">Buscar</button>
 
-<p id="mensaje"></p>
-<div id="alertaCoins" style="display:none"></div>
+<div id="alertaCoins"></div>
 
 <div id="infoUsuario" style="display:none;">
-    <h3>Datos del usuario</h3>
-    <p><strong>Nombre:</strong> <span id="nombre"></span></p>
-    <p><strong>CEDIS:</strong> <span id="cedis"></span></p>
-    <p><strong>Coins actuales:</strong> <span id="coinsActuales"></span></p>
 
-    <h3>Historial</h3>
-    <table id="tablaHistorial">
+<div class="card">
+    <h3>👤 Usuario</h3>
+    <p><b>Nombre:</b> <span id="nombre"></span></p>
+    <p><b>CEDIS:</b> <span id="cedis"></span></p>
+    <p><b>Coins disponibles:</b> <span id="coinsActuales"></span></p>
+</div>
+
+<div class="card">
+    <h3>🎁 Productos</h3>
+    <div id="productosContainer"></div>
+</div>
+
+<div class="card">
+    <h3>📜 Historial</h3>
+    <table>
         <thead>
             <tr>
                 <th>Fecha</th>
-                <th>Coins ganados</th>
                 <th>Producto</th>
-                <th>Coins canjeados</th>
+                <th>Coins</th>
                 <th>Saldo</th>
             </tr>
         </thead>
-        <tbody></tbody>
+        <tbody id="tablaHistorial"></tbody>
     </table>
-
-    <h3>Productos</h3>
-    <div id="productosContainer"></div>
-
-    <div id="carrito">
-        <h4>Carrito</h4>
-        <ul id="listaCarrito"></ul>
-        <button id="btnSolicitar">Solicitar productos</button>
-    </div>
 </div>
 
-<br>
-<a href="index.html">⬅ Volver</a>
+<div id="carrito">
+    <ul id="listaCarrito"></ul>
+    <button id="btnSolicitar">Solicitar productos</button>
+</div>
+
+</div>
+
+<a class="volver" href="index.html">⬅ Volver</a>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-import {
-  getFirestore, doc, getDoc, getDocs, setDoc, collection
-} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, getDocs, setDoc, collection } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCsz2EP8IsTlG02uU2_GRfyQeeajMDuJjI",
-  authDomain: "ajecoins-73829.firebaseapp.com",
-  projectId: "ajecoins-73829",
-  storageBucket: "ajecoins-73829.firebasestorage.app",
-  messagingSenderId: "247461322350",
-  appId: "1:247461322350:web:802185ad39249ca650507f"
-};
+const app = initializeApp({
+    apiKey: "AIzaSyCsz2EP8IsTlG02uU2_GRfyQeeajMDuJjI",
+    authDomain: "ajecoins-73829.firebaseapp.com",
+    projectId: "ajecoins-73829"
+});
 
-const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const coinsActualesSpan = document.getElementById("coinsActuales");
-const tablaBody = document.querySelector("#tablaHistorial tbody");
+const cedulaInput = document.getElementById("cedulaInput");
+const buscarBtn = document.getElementById("buscarBtn");
+const alerta = document.getElementById("alertaCoins");
+
+const nombre = document.getElementById("nombre");
+const cedis = document.getElementById("cedis");
+const coinsSpan = document.getElementById("coinsActuales");
+
 const productosContainer = document.getElementById("productosContainer");
 const listaCarrito = document.getElementById("listaCarrito");
-const alertaCoins = document.getElementById("alertaCoins");
+const historialBody = document.getElementById("tablaHistorial");
+const btnSolicitar = document.getElementById("btnSolicitar");
 
 let coinsUsuario = 0;
 let carrito = [];
 
-/* =======================
-   MOSTRAR USUARIO
-======================= */
-async function mostrarUsuario(cedula) {
-  tablaBody.innerHTML = "";
-  productosContainer.innerHTML = "";
-  carrito = [];
-
-  const userSnap = await getDoc(doc(db, "usuarios", cedula));
-  if (!userSnap.exists()) return;
-
-  document.getElementById("nombre").innerText = userSnap.data().nombre;
-  document.getElementById("cedis").innerText = userSnap.data().cedis;
-
-  // 🔥 CALCULAR SALDO DESDE MOVIMIENTOS
-  let saldo = 0;
-  const movs = await getDocs(collection(db, "usuarios", cedula, "movimientos"));
-
-  movs.forEach(m => {
-    const d = m.data();
-    saldo += (d.coins_ganados || 0);
-    saldo -= (d.coins_canjeados || 0);
-
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${d.fecha}</td>
-      <td>${d.coins_ganados || 0}</td>
-      <td>${d.producto || "-"}</td>
-      <td>${d.coins_canjeados || 0}</td>
-      <td>${saldo}</td>
-    `;
-    tablaBody.appendChild(tr);
-  });
-
-  coinsUsuario = saldo;
-  coinsActualesSpan.innerText = saldo;
-  document.getElementById("infoUsuario").style.display = "block";
-
-  // PRODUCTOS
-  const prods = await getDocs(collection(db, "productos"));
-  prods.forEach(p => {
-    const prod = p.data();
-    const div = document.createElement("div");
-    div.innerHTML = `
-      <img src="${prod.imagen}">
-      <p>${prod.nombre}</p>
-      <p>${prod.coins} coins</p>
-      <button onclick="agregar('${prod.nombre}', ${prod.coins})">+ Agregar</button>
-    `;
-    productosContainer.appendChild(div);
-  });
+function mostrarAlerta(txt) {
+    alerta.innerText = txt;
+    alerta.style.display = "block";
+    setTimeout(()=> alerta.style.display="none",3000);
 }
 
-window.agregar = (nombre, coins) => {
-  const total = carrito.reduce((s,i)=>s+i.coins*i.cantidad,0);
-  if (total + coins > coinsUsuario) {
-    alertaCoins.innerText = "❌ Usuario excedió el monto de coins actuales";
-    alertaCoins.style.display = "block";
-    return;
-  }
-  const ex = carrito.find(p=>p.nombre===nombre);
-  ex ? ex.cantidad++ : carrito.push({nombre, coins, cantidad:1});
-  renderCarrito();
-};
+function actualizarCarrito() {
+    listaCarrito.innerHTML = "";
+    let total = 0;
 
-function renderCarrito(){
-  listaCarrito.innerHTML="";
-  let total=0;
-  carrito.forEach(p=>{
-    total+=p.coins*p.cantidad;
-    listaCarrito.innerHTML+=`<li>${p.nombre} x${p.cantidad}</li>`;
-  });
-  coinsActualesSpan.innerText = coinsUsuario - total;
-}
-
-/* =======================
-   SOLICITAR PRODUCTOS
-======================= */
-document.getElementById("btnSolicitar").onclick = async ()=>{
-  if(carrito.length===0) return;
-  const cedula = document.getElementById("cedulaInput").value;
-  const fecha = new Date().toLocaleDateString("es-EC");
-  let total=0;
-
-  for(const p of carrito){
-    total+=p.coins*p.cantidad;
-    await setDoc(doc(collection(db,"usuarios",cedula,"movimientos")),{
-      fecha,
-      producto:p.nombre,
-      coins_canjeados:p.coins*p.cantidad,
-      coins_ganados:0
+    carrito.forEach((p,i)=>{
+        total += p.coins * p.cantidad;
+        const li = document.createElement("li");
+        li.innerHTML = `${p.nombre} (${p.cantidad}) - ${p.coins*p.cantidad}
+        <button class="cantidad-btn" onclick="mod(${i},1)">+</button>
+        <button class="cantidad-btn" onclick="mod(${i},-1)">-</button>`;
+        listaCarrito.appendChild(li);
     });
-  }
 
-  await setDoc(doc(db,"usuarios",cedula),
-    { coins_actuales: coinsUsuario-total },
-    { merge:true }
-  );
+    coinsSpan.innerText = coinsUsuario - total;
+}
 
-  alertaCoins.innerText="✅ Productos solicitados correctamente";
-  alertaCoins.style.display="block";
+window.mod = (i, v)=>{
+    if (v === 1 && carrito.reduce((s,p)=>s+p.coins*p.cantidad,0)+carrito[i].coins > coinsUsuario)
+        return mostrarAlerta("❌ Coins insuficientes");
+    carrito[i].cantidad += v;
+    if (carrito[i].cantidad <= 0) carrito.splice(i,1);
+    actualizarCarrito();
 };
 
-document.getElementById("buscarBtn").onclick=()=>{
-  mostrarUsuario(document.getElementById("cedulaInput").value);
+buscarBtn.onclick = async ()=>{
+    const ced = cedulaInput.value.trim();
+    const u = await getDoc(doc(db,"usuarios",ced));
+    if (!u.exists()) return mostrarAlerta("Usuario no encontrado");
+
+    const d = u.data();
+    coinsUsuario = d.coins_actuales ?? 0;
+
+    nombre.innerText = d.nombre;
+    cedis.innerText = d.cedis;
+    coinsSpan.innerText = coinsUsuario;
+
+    productosContainer.innerHTML = "";
+    const ps = await getDocs(collection(db,"productos"));
+    ps.forEach(p=>{
+        const pr = p.data();
+        const div = document.createElement("div");
+        div.className="producto-card";
+        div.innerHTML = `<img src="${pr.imagen||''}">
+        <h4>${pr.nombre}</h4>
+        <p>${pr.coins} coins</p>
+        <button class="btn-agregar">Agregar</button>`;
+        div.querySelector("button").onclick=()=>{
+            const t = carrito.reduce((s,x)=>s+x.coins*x.cantidad,0);
+            if (t+pr.coins > coinsUsuario) return mostrarAlerta("❌ Coins insuficientes");
+            const ex = carrito.find(x=>x.nombre===pr.nombre);
+            ex ? ex.cantidad++ : carrito.push({nombre:pr.nombre,coins:pr.coins,cantidad:1});
+            actualizarCarrito();
+        };
+        productosContainer.appendChild(div);
+    });
+
+    document.getElementById("infoUsuario").style.display="block";
 };
 </script>
 </body>
