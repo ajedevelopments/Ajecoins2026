@@ -3,7 +3,9 @@ import {
   getFirestore,
   collection,
   addDoc,
-  getDocs
+  getDocs,
+  setDoc,
+  doc
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -18,7 +20,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ----------- CARGAR PRODUCTOS (solo nombres) -----------
+// ----------- CARGAR PRODUCTOS -----------
 const productFileInput = document.getElementById("productFileInput");
 const uploadProductBtn = document.getElementById("uploadProductBtn");
 const productsBody = document.querySelector("#productsTable tbody");
@@ -28,10 +30,15 @@ uploadProductBtn.addEventListener("click", async () => {
   if (!file) return alert("Selecciona el CSV de productos");
   const text = await file.text();
   const lines = text.trim().split("\n");
+  let first = true;
   for (const line of lines) {
-    const [producto, coins] = line.split(",");
-    await addDoc(collection(db, "productos"), {
-      producto: producto.trim(),
+    if (first) { first = false; continue; } // salta encabezado
+    const clean = line.trim().replace(/"/g, "");
+    if (!clean) continue;
+    const [producto, coins] = clean.split(",");
+    const prod = producto.trim();
+    await setDoc(doc(db, "productos", prod), {
+      producto: prod,
       coins: parseInt(coins.trim(), 10)
     });
   }
@@ -47,13 +54,13 @@ async function loadProducts() {
     productsBody.innerHTML += `
       <tr>
         <td>${p.producto}</td>
-        <td>—</td>
+        <td><img src="assets/productos/${p.producto}.png" alt="${p.producto}" onerror="this.src='assets/productos/${p.producto}.jpg'"/></td>
         <td>${p.coins}</td>
       </tr>`;
   });
 }
 
-// ----------- CARGAR USUARIOS (opcional por ahora) -----------
+// ----------- CARGAR USUARIOS -----------
 const fileInput = document.getElementById("fileInput");
 const uploadBtn = document.getElementById("uploadBtn");
 const usersBody = document.querySelector("#usersTable tbody");
