@@ -37,6 +37,10 @@ let userId = '';
 ingresarBtn.addEventListener('click', buscarUsuario);
 cerrarBtn.addEventListener('click', () => location.reload());
 
+// **BOTONES DEL MODAL**
+document.getElementById('btnConfirmar').addEventListener('click', confirmarCompra);
+document.getElementById('btnCancelar').addEventListener('click', cerrarModal);
+
 // ---------- FUNCIONES ----------
 async function buscarUsuario() {
   const ced = cedulaInput.value.trim();
