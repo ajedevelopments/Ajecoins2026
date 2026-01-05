@@ -115,7 +115,6 @@ async function loadProductos() {
     const snapshot = await getDocs(collection(db, "productos"));
     snapshot.forEach(doc => {
       const p = doc.data();
-      // 🔹 Ruta relativa para GitHub Pages
       const imgSrc = `assets/productos/${p.nombre}.png`;
 
       const row = `<tr>
