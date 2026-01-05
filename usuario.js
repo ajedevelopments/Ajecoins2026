@@ -56,10 +56,10 @@ async function buscarUsuario() {
 
   const docSnap = snap.docs[0];
   userId = docSnap.id;
-  userCed = ced;
+  userCed = ced; // <-- GUARDAMOS CÉDULA PRIMERO
   const user = docSnap.data();
   mostrarDatos(user);
-  cargarHistorial();
+  cargarHistorial(); // <-- AHORA SÍ TENEMOS CÉDULA
 }
 
 function mostrarDatos(u) {
@@ -182,7 +182,7 @@ async function confirmarCompra(){
   actualizarCarrito();
   cerrarModal();
   mostrarToast();
-  cargarHistorial();
+  cargarHistorial(); // <-- recarga historial tras compra
 }
 
 function mostrarToast(){
