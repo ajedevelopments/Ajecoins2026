@@ -1,88 +1,47 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>ADMIN · AJE COINS</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AJE Coins - Admin</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<header class="top-bar">
-    <h1>🪙 AJE COINS · ADMIN</h1>
-    <a href="index.html" class="btn-secundario">⬅ Volver</a>
-</header>
+<div class="container">
+  <h1 class="center">Panel Administrador</h1>
 
-<main class="container">
+  <!-- SUBIR COINS -->
+  <div class="card">
+    <h3>Subir archivo CSV de Coins ganados</h3>
+    <input type="file" id="archivoCSV" accept=".csv">
+    <button id="btnSubirCoins" class="btn-primary full">Subir Coins</button>
+    <p id="estadoSubida"></p>
+    <p>Formato esperado: fecha,cedula,nombre,cedis,coins_ganados</p>
+  </div>
 
-    <!-- =========================
-         CARGA DE COINS
-    ========================== -->
-    <section class="card">
-        <h2>📥 Cargar coins (CSV)</h2>
+  <!-- TABLA CANJES -->
+  <div class="card">
+    <h3>Productos solicitados por usuarios</h3>
+    <button id="btnDescargarCSV" class="btn-secondary full">📥 Descargar CSV</button>
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Cédula</th>
+          <th>Nombre</th>
+          <th>Producto</th>
+          <th>Coins canjeados</th>
+          <th>Saldo final</th>
+        </tr>
+      </thead>
+      <tbody id="tablaCanjes"></tbody>
+    </table>
+  </div>
 
-        <p class="hint">
-            Formato CSV:<br>
-            <b>fecha, cedula, nombre, cedis, coins</b>
-        </p>
-
-        <input type="file" id="fileInput" accept=".csv">
-        <p id="status" class="status"></p>
-    </section>
-
-    <!-- =========================
-         HISTORIAL DE CARGAS
-    ========================== -->
-    <section class="card">
-        <h2>📊 Historial de cargas</h2>
-
-        <div class="table-wrapper">
-            <table id="tablaDatos">
-                <thead>
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Cédula</th>
-                        <th>Nombre</th>
-                        <th>Cedis</th>
-                        <th>Coins cargados</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- admin.js -->
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    <!-- =========================
-         CANJES DE USUARIOS
-    ========================== -->
-    <section class="card">
-        <div class="card-header">
-            <h2>🛒 Productos canjeados</h2>
-            <button id="descargarCanjes" class="btn">
-                ⬇ Descargar CSV
-            </button>
-        </div>
-
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Cédula</th>
-                        <th>Nombre</th>
-                        <th>Producto</th>
-                        <th>Coins</th>
-                    </tr>
-                </thead>
-                <tbody id="tablaCanjes">
-                    <!-- admin.js -->
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-</main>
+  <br>
+  <a href="index.html" class="btn-secondary full">⬅ Volver al inicio</a>
+</div>
 
 <script type="module" src="admin.js"></script>
 </body>
