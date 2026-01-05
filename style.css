@@ -1,139 +1,121 @@
-/* ===== BASE ===== */
-body {
-  font-family: Arial, sans-serif;
-  padding: 20px;
-  background: #f8fafc;
+/* ===== DASHBOARD EJECUTIVO VERDE-BLANCO ===== */
+body.dashboard {
+  margin: 0;
+  font-family: "Inter", system-ui, sans-serif;
+  background: #ffffff;
+  color: #065f46;
+}
+
+.topbar {
+  background: #065f46;
+  color: #ffffff;
+  padding: 16px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.topbar h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
   margin: 0;
 }
 
-h1 {
-  color: #065f46;
-  margin-bottom: 10px;
+.coins-top {
+  background: #ffffff22;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: 600;
 }
 
-/* ===== TABLAS ===== */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 20px;
+.container {
+  max-width: 960px;
+  margin: 32px auto;
+  padding: 0 24px;
 }
 
-th, td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: left;
-}
-
-th {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-tr:hover {
+.card {
   background: #f0fdf4;
+  border: 1px solid #a7f3d0;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
 }
 
-/* ===== ELEMENTOS UI ===== */
-#loading {
-  display: none;
-  color: #065f46;
-  font-weight: bold;
-  margin-bottom: 10px;
+.card h2 {
+  margin-top: 0;
+  font-size: 1.25rem;
+  color: #047857;
 }
 
-label {
-  cursor: pointer;
-  background: #d1fae5;
-  padding: 6px 12px;
-  border-radius: 6px;
-  display: inline-block;
-  margin-bottom: 10px;
+.card input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #d1fae5;
+  border-radius: 8px;
+  margin-bottom: 12px;
 }
 
 button {
-  background: #065f46;
-  color: white;
-  padding: 8px 16px;
+  width: 100%;
+  padding: 10px;
   border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  margin-top: 10px;
-}
-
-button:hover {
-  background: #047857;
-}
-
-img {
-  border-radius: 6px;
-  object-fit: cover;
-}
-
-/* ===== USUARIO: LOGIN ===== */
-#login {
-  margin-bottom: 20px;
-}
-
-#login input {
-  padding: 6px 10px;
-  margin-right: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-/* ===== USUARIO: INFO ===== */
-#userInfo {
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
   border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 20px;
+  background: #065f46;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
 }
 
-/* ===== USUARIO: PRODUCTOS ===== */
-#productosList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 10px;
+button.primary {
+  background: #10b981;
+}
+
+.coins-card {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #047857;
+  margin-top: 12px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 20px;
 }
 
 .producto {
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 10px;
+  background: #ffffff;
+  border: 1px solid #d1fae5;
+  border-radius: 12px;
+  padding: 20px;
   text-align: center;
-  background: #fff;
-  width: 130px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+  transition: box-shadow 0.2s;
+}
+
+.producto:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
 }
 
 .producto img {
-  width: 60px;
-  height: 60px;
-  margin-bottom: 6px;
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 12px;
 }
 
 .producto button {
-  margin-top: 6px;
+  margin-top: 12px;
+  font-size: 0.875rem;
+}
+
+table {
   width: 100%;
+  font-size: 0.875rem;
 }
 
-/* ===== USUARIO: CARRITO ===== */
-#carrito {
-  background: #fffbeb;
-  border: 1px solid #facc15;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 20px;
-}
-
-#carritoList {
-  margin: 8px 0 0 20px;
-  padding: 0;
-}
-
-/* ===== USUARIO: HISTORIAL ===== */
-#historial {
-  margin-top: 20px;
+.hidden {
+  display: none;
 }
