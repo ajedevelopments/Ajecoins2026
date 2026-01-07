@@ -15,7 +15,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ----------- USUARIOS (BORRA POR FECHA Y SUBE NUEVO, separa por TABS) -----------
+// ----------- USUARIOS (BORRA POR FECHA Y SUBE NUEVO, busca PRIMERA válida) -----------
 const fileInput = document.getElementById("fileInput");
 const uploadBtn = document.getElementById("uploadBtn");
 const usersBody = document.querySelector("#usersTable tbody");
@@ -27,16 +27,16 @@ uploadBtn.addEventListener("click", async () => {
   const text = await file.text();
   const lines = text.trim().split("\n");
 
-  // 1. Toma la fecha del PRIMER registro válido (por TABS)
+  // 1. Busca la PRIMERA línea VÁLIDA (con 5 columnas y fecha/cedula no vacías)
   let targetDate = "";
   for (let i = 1; i < lines.length; i++) {
-    const p = lines[i].trim().split(/\t+/); // <-- separa por TABS
-    if (p.length >= 5 && p[0].trim() !== "") {
+    const p = lines[i].trim().split(/\t+/);
+    if (p.length >= 5 && p[0].trim() !== "" && p[1].trim() !== "") {
       targetDate = p[0].trim();
       break;
     }
   }
-  if (!targetDate) return alert("No hay registros válidos");
+  if (!targetDate) return alert("No hay registros válidos (asegúrate de 5 columnas con fecha y cédula)");
 
   // 2. BORRA TODOS los documentos de esa fecha
   const q = query(collection(db, "usuarios"), where("fecha", "==", targetDate));
@@ -48,10 +48,10 @@ uploadBtn.addEventListener("click", async () => {
   }
   console.log("Borrados por fecha", targetDate, ":", deleted);
 
-  // 3. SUBE líneas VÁLIDAS (por TABS)
+  // 3. SUBE líneas VÁLIDAS (con 5 columnas y fecha/cedula no vacías)
   let created = 0;
   for (const line of lines) {
-    const parts = line.trim().split(/\t+/); // <-- separa por TABS
+    const parts = line.trim().split(/\t+/);
     if (parts.length < 5 || parts[0].trim() === "" || parts[1].trim() === "") continue;
 
     const [fecha, cedula, nombre, cedis, coins_ganados] = parts;
