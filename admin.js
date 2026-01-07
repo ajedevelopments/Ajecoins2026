@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
-  getFirestore, collection, addDoc, getDocs, setDoc, doc, deleteDoc
+  getFirestore, collection, addDoc, getDocs, setDoc, doc, deleteDoc, query, where
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -15,7 +15,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ----------- USUARIOS (SOBRESCRIBE EN FIRESTORE POR CÉDULA) -----------
+// ----------- USUARIOS (BORRA POR FECHA Y SUBE NUEVO) -----------
 const fileInput = document.getElementById("fileInput");
 const uploadBtn = document.getElementById("uploadBtn");
 const usersBody = document.querySelector("#usersTable tbody");
@@ -27,17 +27,27 @@ uploadBtn.addEventListener("click", async () => {
   const text = await file.text();
   const lines = text.trim().split("\n").slice(1); // salta encabezado
 
+  // 1. Toma la fecha del PRIMER registro (todos son la misma)
+  const firstParts = lines[0].trim().split(",");
+  if (firstParts.length < 5) return alert("CSV mal formado");
+  const targetDate = firstParts[0].trim();
+
+  // 2. BORRA TODOS los documentos de esa fecha
+  const q = query(collection(db, "usuarios"), where("fecha", "==", targetDate));
+  const snap = await getDocs(q);
+  let deleted = 0;
+  for (const docSnap of snap.docs) {
+    await deleteDoc(doc(db, "usuarios", docSnap.id));
+    deleted++;
+  }
+  console.log("Borrados por fecha", targetDate, ":", deleted);
+
+  // 3. SUBE el nuevo archivo
   for (const line of lines) {
     const parts = line.trim().split(",");
-    if (parts.length < 5) {
-      console.warn("Línea incompleta:", line);
-      continue;
-    }
-
+    if (parts.length < 5) continue;
     const [fecha, cedula, nombre, cedis, coins_ganados] = parts;
-    const docId = cedula.trim(); // <-- usamos cédula como ID
-
-    // SOBRESCRIBE directamente en Firestore
+    const docId = cedula.trim();
     await setDoc(doc(db, "usuarios", docId), {
       fecha: fecha.trim(),
       cedula: cedula.trim(),
@@ -45,10 +55,10 @@ uploadBtn.addEventListener("click", async () => {
       cedis: cedis.trim(),
       coins_ganados: parseInt(coins_ganados.trim(), 10)
     });
-    console.log("Sobrescrito en Firestore:", docId);
+    console.log("Creado:", docId);
   }
 
-  alert("Usuarios sobrescritos / añadidos");
+  alert("Usuarios de " + targetDate + " actualizados");
   loadUsers();
 });
 
