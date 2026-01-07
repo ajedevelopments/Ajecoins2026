@@ -15,7 +15,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ----------- USUARIOS (BORRA + CREA con la misma cédula) -----------
+// ----------- USUARIOS (SOBRESCRIBE EN FIRESTORE POR CÉDULA) -----------
 const fileInput = document.getElementById("fileInput");
 const uploadBtn = document.getElementById("uploadBtn");
 const usersBody = document.querySelector("#usersTable tbody");
@@ -23,22 +23,21 @@ const usersBody = document.querySelector("#usersTable tbody");
 uploadBtn.addEventListener("click", async () => {
   const file = fileInput.files[0];
   if (!file) return alert("Selecciona el CSV de usuarios");
+
   const text = await file.text();
   const lines = text.trim().split("\n").slice(1); // salta encabezado
+
   for (const line of lines) {
     const parts = line.trim().split(",");
     if (parts.length < 5) {
       console.warn("Línea incompleta:", line);
       continue;
     }
+
     const [fecha, cedula, nombre, cedis, coins_ganados] = parts;
     const docId = cedula.trim(); // <-- usamos cédula como ID
 
-    // 1. BORRA el documento viejo (si existe)
-    await deleteDoc(doc(db, "usuarios", docId)).catch(() => {});
-    console.log("Borrado (o no existía):", docId);
-
-    // 2. CREA el nuevo (sobrescribe)
+    // SOBRESCRIBE directamente en Firestore
     await setDoc(doc(db, "usuarios", docId), {
       fecha: fecha.trim(),
       cedula: cedula.trim(),
@@ -46,8 +45,9 @@ uploadBtn.addEventListener("click", async () => {
       cedis: cedis.trim(),
       coins_ganados: parseInt(coins_ganados.trim(), 10)
     });
-    console.log("Creado / sobrescrito:", docId);
+    console.log("Sobrescrito en Firestore:", docId);
   }
+
   alert("Usuarios sobrescritos / añadidos");
   loadUsers();
 });
