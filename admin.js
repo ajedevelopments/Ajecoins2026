@@ -15,7 +15,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ----------- USUARIOS (FECHA = ID, acumula por día) -----------
+// ----------- USUARIOS (PUNTO Y COMA + BORRA POR FECHA + LOGS) -----------
 const fileInput = document.getElementById("fileInput");
 const uploadBtn = document.getElementById("uploadBtn");
 const usersBody = document.querySelector("#usersTable tbody");
@@ -25,63 +25,77 @@ uploadBtn.addEventListener("click", async () => {
   if (!file) return alert("Selecciona el CSV de usuarios");
 
   const text = await file.text();
-  const lines = text.trim().split("\n").slice(1); // salta encabezado
+  console.log("Texto leído:", text.slice(0, 300)); // primeros 300 caracteres
 
-  // 1. Toma la fecha del PRIMER registro válido (por punto y coma)
+  const lines = text.trim().split("\n").slice(1); // salta encabezado
+  console.log("Total líneas:", lines.length);
+
+  // 1. Busca la PRIMERA línea VÁLIDA (por punto y coma)
   let targetDate = "";
   for (let i = 0; i < lines.length; i++) {
     const p = lines[i].trim().split(";");
+    console.log(`Línea ${i}:`, p);
     if (p.length >= 5 && p[0].trim() !== "" && p[1].trim() !== "") {
       targetDate = p[0].trim();
       break;
     }
   }
-  if (!targetDate) return alert("No hay registros válidos (asegúrate de 5 columnas con fecha y cédula)");
-
-  // 2. GUARDA/ACTUALIZA usando la FECHA como ID (acumula por día)
-  const docId = targetDate; // <-- FECHA es la clave
-  const contenido = []; // guardaremos TODOS los registros de ese día
-  for (const line of lines) {
-    const parts = line.trim().split(";");
-    if (parts.length < 5 || parts[0].trim() === "" || parts[1].trim() === "") continue;
-    contenido.push({
-      fecha: parts[0].trim(),
-      cedula: parts[1].trim(),
-      nombre: parts[2].trim(),
-      cedis: parts[3].trim(),
-      coins_ganados: parseInt(parts[4].trim(), 10)
-    });
+  if (!targetDate) {
+    alert("No hay registros válidos (asegúrate de 5 columnas con fecha y cédula)");
+    return;
   }
 
-  // 3. GUARDA/ACTUALIZA el documento de ese día
-  await setDoc(doc(db, "usuariosPorFecha", docId), {
-    fecha: targetDate,
-    registros: contenido
-  });
+  // 2. BORRA TODOS los documentos de esa fecha
+  const q = query(collection(db, "usuarios"), where("fecha", "==", targetDate));
+  const snap = await getDocs(q);
+  let deleted = 0;
+  for (const docSnap of snap.docs) {
+    await deleteDoc(doc(db, "usuarios", docSnap.id));
+    deleted++;
+  }
+  console.log("Borrados por fecha", targetDate, ":", deleted);
 
-  alert(`Base del día ${targetDate} procesada (${contenido.length} registros)`);
+  // 3. SUBE líneas VÁLIDAS (por punto y coma, 5 columnas, fecha/cedula no vacías)
+  let created = 0;
+  for (const line of lines) {
+    const parts = line.trim().split(";");
+    if (parts.length < 5 || parts[0].trim() === "" || parts[1].trim() === "") {
+      console.warn("Saltando línea inválida:", line);
+      continue;
+    }
+    const [fecha, cedula, nombre, cedis, coins_ganados] = parts;
+    const docId = cedula.trim();
+    await setDoc(doc(db, "usuarios", docId), {
+      fecha: fecha.trim(),
+      cedula: cedula.trim(),
+      nombre: nombre.trim(),
+      cedis: cedis.trim(),
+      coins_ganados: parseInt(coins_ganados.trim(), 10)
+    });
+    created++;
+    console.log("Creado:", docId);
+  }
+
+  alert(`Usuarios de ${targetDate} actualizados (${created} registros)`);
   loadUsers();
 });
 
 async function loadUsers() {
   usersBody.innerHTML = "";
-  const snap = await getDocs(collection(db, "usuariosPorFecha"));
-  const dias = [];
-  snap.forEach(d => dias.push(d.data()));
+  const snap = await getDocs(collection(db, "usuarios"));
+  const usuarios = [];
+  snap.forEach(d => usuarios.push(d.data()));
   // orden cronológico
-  dias.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-  dias.forEach(dia => {
-    // despliega TODOS los registros de ese día
-    dia.registros.forEach(u => {
-      usersBody.innerHTML += `
-        <tr>
-          <td>${u.fecha}</td>
-          <td>${u.cedula}</td>
-          <td>${u.nombre}</td>
-          <td>${u.cedis}</td>
-          <td>${u.coins_ganados}</td>
-        </tr>`;
-    });
+  usuarios.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+  usuarios.forEach(u => {
+    usersBody.innerHTML += `
+      <tr>
+        <td>${u.fecha}</td>
+        <td>${u.cedula}</td>
+        <td>${u.nombre}</td>
+        <td>${u.cedis}</td>
+        <td>${u.coins_ganados}</td>
+      </tr>`;
   });
 }
 
