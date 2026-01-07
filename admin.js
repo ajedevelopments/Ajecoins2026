@@ -15,7 +15,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ----------- USUARIOS (COMMAS + BORRA SOLO SI FECHA REPETIDA) -----------
+// ----------- USUARIOS (PUNTO Y COMA + BORRA SOLO SI FECHA REPETIDA) -----------
 const fileInput = document.getElementById("fileInput");
 const uploadBtn = document.getElementById("uploadBtn");
 const usersBody = document.querySelector("#usersTable tbody");
@@ -27,10 +27,10 @@ uploadBtn.addEventListener("click", async () => {
   const text = await file.text();
   const lines = text.trim().split("\n").slice(1); // salta encabezado
 
-  // 1. Toma la fecha del PRIMER registro válido (por comas)
+  // 1. Toma la fecha del PRIMER registro válido (por punto y coma)
   let targetDate = "";
   for (let i = 0; i < lines.length; i++) {
-    const p = lines[i].trim().split(",");
+    const p = lines[i].trim().split(";");
     if (p.length >= 5 && p[0].trim() !== "" && p[1].trim() !== "") {
       targetDate = p[0].trim();
       break;
@@ -48,10 +48,10 @@ uploadBtn.addEventListener("click", async () => {
   }
   console.log("Borrados por fecha", targetDate, ":", deleted);
 
-  // 3. SUBE TODAS las líneas válidas (con 5 columnas y fecha/cedula no vacías)
+  // 3. SUBE TODAS las líneas válidas (por punto y coma, 5 columnas, fecha/cedula no vacías)
   let created = 0;
   for (const line of lines) {
-    const parts = line.trim().split(",");
+    const parts = line.trim().split(";");
     if (parts.length < 5 || parts[0].trim() === "" || parts[1].trim() === "") continue;
 
     const [fecha, cedula, nombre, cedis, coins_ganados] = parts;
