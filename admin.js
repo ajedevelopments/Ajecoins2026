@@ -15,7 +15,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ----------- USUARIOS (PUNTO Y COMA + BORRA SOLO SI FECHA REPETIDA) -----------
+// ----------- USUARIOS (FECHA = ID, acumula por día) -----------
 const fileInput = document.getElementById("fileInput");
 const uploadBtn = document.getElementById("uploadBtn");
 const usersBody = document.querySelector("#usersTable tbody");
@@ -38,55 +38,50 @@ uploadBtn.addEventListener("click", async () => {
   }
   if (!targetDate) return alert("No hay registros válidos (asegúrate de 5 columnas con fecha y cédula)");
 
-  // 2. BORRA SOLO si esa fecha YA existe (no toca otras fechas)
-  const q = query(collection(db, "usuarios"), where("fecha", "==", targetDate));
-  const snap = await getDocs(q);
-  let deleted = 0;
-  for (const docSnap of snap.docs) {
-    await deleteDoc(doc(db, "usuarios", docSnap.id));
-    deleted++;
-  }
-  console.log("Borrados por fecha", targetDate, ":", deleted);
-
-  // 3. SUBE TODAS las líneas válidas (por punto y coma, 5 columnas, fecha/cedula no vacías)
-  let created = 0;
+  // 2. GUARDA/ACTUALIZA usando la FECHA como ID (acumula por día)
+  const docId = targetDate; // <-- FECHA es la clave
+  const contenido = []; // guardaremos TODOS los registros de ese día
   for (const line of lines) {
     const parts = line.trim().split(";");
     if (parts.length < 5 || parts[0].trim() === "" || parts[1].trim() === "") continue;
-
-    const [fecha, cedula, nombre, cedis, coins_ganados] = parts;
-    const docId = cedula.trim();
-    await setDoc(doc(db, "usuarios", docId), {
-      fecha: fecha.trim(),
-      cedula: cedula.trim(),
-      nombre: nombre.trim(),
-      cedis: cedis.trim(),
-      coins_ganados: parseInt(coins_ganados.trim(), 10)
+    contenido.push({
+      fecha: parts[0].trim(),
+      cedula: parts[1].trim(),
+      nombre: parts[2].trim(),
+      cedis: parts[3].trim(),
+      coins_ganados: parseInt(parts[4].trim(), 10)
     });
-    created++;
-    console.log("Creado:", docId);
   }
 
-  alert(`Usuarios de ${targetDate} procesados (${created} registros)`);
+  // 3. GUARDA/ACTUALIZA el documento de ese día
+  await setDoc(doc(db, "usuariosPorFecha", docId), {
+    fecha: targetDate,
+    registros: contenido
+  });
+
+  alert(`Base del día ${targetDate} procesada (${contenido.length} registros)`);
   loadUsers();
 });
 
 async function loadUsers() {
   usersBody.innerHTML = "";
-  const snap = await getDocs(collection(db, "usuarios"));
-  const usuarios = [];
-  snap.forEach(d => usuarios.push(d.data()));
+  const snap = await getDocs(collection(db, "usuariosPorFecha"));
+  const dias = [];
+  snap.forEach(d => dias.push(d.data()));
   // orden cronológico
-  usuarios.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-  usuarios.forEach(u => {
-    usersBody.innerHTML += `
-      <tr>
-        <td>${u.fecha}</td>
-        <td>${u.cedula}</td>
-        <td>${u.nombre}</td>
-        <td>${u.cedis}</td>
-        <td>${u.coins_ganados}</td>
-      </tr>`;
+  dias.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+  dias.forEach(dia => {
+    // despliega TODOS los registros de ese día
+    dia.registros.forEach(u => {
+      usersBody.innerHTML += `
+        <tr>
+          <td>${u.fecha}</td>
+          <td>${u.cedula}</td>
+          <td>${u.nombre}</td>
+          <td>${u.cedis}</td>
+          <td>${u.coins_ganados}</td>
+        </tr>`;
+    });
   });
 }
 
@@ -173,4 +168,3 @@ function exportarComprasCSV(){
 loadProducts();
 loadUsers();
 loadCompras();
-
