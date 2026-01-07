@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
-  getFirestore, collection, addDoc, getDocs, setDoc, doc, deleteDoc
+  getFirestore, collection, addDoc, getDocs, setDoc, doc, deleteDoc, query, where
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -15,7 +15,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ----------- USUARIOS -----------
+// ----------- USUARIOS (TABS + BORRA POR FECHA + VALIDA 5 COLUMNAS) -----------
 const fileInput = document.getElementById("fileInput");
 const uploadBtn = document.getElementById("uploadBtn");
 const usersBody = document.querySelector("#usersTable tbody");
@@ -23,27 +23,62 @@ const usersBody = document.querySelector("#usersTable tbody");
 uploadBtn.addEventListener("click", async () => {
   const file = fileInput.files[0];
   if (!file) return alert("Selecciona el CSV de usuarios");
+
   const text = await file.text();
-  const lines = text.trim().split("\n").slice(1);
+  const lines = text.trim().split("\n").slice(1); // salta encabezado
+
+  // 1. Toma la fecha del PRIMER registro válido (por TABS)
+  let targetDate = "";
+  for (let i = 1; i < lines.length; i++) {
+    const p = lines[i].trim().split(/\t+/);
+    if (p.length >= 5 && p[0].trim() !== "" && p[1].trim() !== "") {
+      targetDate = p[0].trim();
+      break;
+    }
+  }
+  if (!targetDate) return alert("No hay registros válidos (asegúrate de 5 columnas con fecha y cédula)");
+
+  // 2. BORRA TODOS los documentos de esa fecha
+  const q = query(collection(db, "usuarios"), where("fecha", "==", targetDate));
+  const snap = await getDocs(q);
+  let deleted = 0;
+  for (const docSnap of snap.docs) {
+    await deleteDoc(doc(db, "usuarios", docSnap.id));
+    deleted++;
+  }
+  console.log("Borrados por fecha", targetDate, ":", deleted);
+
+  // 3. SUBE líneas VÁLIDAS (por TABS, 5 columnas, fecha/cedula no vacías)
+  let created = 0;
   for (const line of lines) {
-    const [fecha, cedula, nombre, cedis, coins_ganados] = line.split(",");
-    await addDoc(collection(db, "usuarios"), {
+    const parts = line.trim().split(/\t+/);
+    if (parts.length < 5 || parts[0].trim() === "" || parts[1].trim() === "") continue;
+
+    const [fecha, cedula, nombre, cedis, coins_ganados] = parts;
+    const docId = cedula.trim();
+    await setDoc(doc(db, "usuarios", docId), {
       fecha: fecha.trim(),
       cedula: cedula.trim(),
       nombre: nombre.trim(),
       cedis: cedis.trim(),
       coins_ganados: parseInt(coins_ganados.trim(), 10)
     });
+    created++;
+    console.log("Creado:", docId);
   }
-  alert("Usuarios cargados");
+
+  alert(`Usuarios de ${targetDate} actualizados (${created} registros)`);
   loadUsers();
 });
 
 async function loadUsers() {
   usersBody.innerHTML = "";
   const snap = await getDocs(collection(db, "usuarios"));
-  snap.forEach(d => {
-    const u = d.data();
+  const usuarios = [];
+  snap.forEach(d => usuarios.push(d.data()));
+  // orden cronológico
+  usuarios.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+  usuarios.forEach(u => {
     usersBody.innerHTML += `
       <tr>
         <td>${u.fecha}</td>
