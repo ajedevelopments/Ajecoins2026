@@ -45,6 +45,7 @@ async function buscarUsuario() {
   const ced = cedulaInput.value.trim();
   if (!ced) { errorMsg.textContent = 'Escribe tu cédula'; return; }
 
+  // 1. Buscamos todos los registros de la cédula
   const q = query(collection(db, 'usuariosPorFecha'), where('cedula', '==', ced));
   const snap = await getDocs(q);
 
@@ -53,7 +54,7 @@ async function buscarUsuario() {
     return;
   }
 
-  // Sumamos coins y tomamos la fecha más reciente
+  // 2. Sumamos coins y tomamos datos más recientes
   let totalCoins = 0;
   let fechaMasReciente = '';
   let nombre = '';
@@ -69,15 +70,26 @@ async function buscarUsuario() {
     }
   });
 
+  // 3. RESTAMOS el total de compras ya hechas
+  const qCompras = query(collection(db, 'compras'), where('cedula', '==', ced));
+  const snapCompras = await getDocs(qCompras);
+  let totalGastado = 0;
+  snapCompras.forEach(doc => {
+    totalGastado += doc.data().total;
+  });
+
+  const saldoReal = totalCoins - totalGastado;
+
+  // 4. Guardamos valores globales
   userCed = ced;
-  coinsUsuario = totalCoins;
+  coinsUsuario = saldoReal;
 
   mostrarDatos({
     fecha: fechaMasReciente,
     cedula: ced,
     nombre: nombre,
     cedis: cedis,
-    coins_ganados: totalCoins
+    coins_ganados: saldoReal
   });
 
   cargarHistorial();
@@ -94,7 +106,8 @@ function mostrarDatos(u) {
     <li><strong>Cedis:</strong> ${u.cedis}</li>
   `;
 
-  coinsP.textContent = coinsUsuario;
+  coinsP.textContent = u.coins_ganados;
+  coinsUsuario = u.coins_ganados;
   cargarProductos();
 }
 
@@ -201,6 +214,7 @@ async function confirmarCompra() {
   let restante = total;
   for (const doc of docs) {
     if (restante <= 0) break;
+
     const disponible = doc.coins_ganados;
     const aDescontar = Math.min(disponible, restante);
 
