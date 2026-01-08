@@ -40,12 +40,18 @@ cerrarBtn.addEventListener('click', () => location.reload());
 document.getElementById('btnConfirmar').addEventListener('click', confirmarCompra);
 document.getElementById('btnCancelar').addEventListener('click', cerrarModal);
 
+// Delegación de evento para botón "Finalizar compra" (SIEMPRE funciona)
+document.addEventListener('click', e => {
+  if (e.target && e.target.id === 'btnFin') {
+    abrirModal();
+  }
+});
+
 // ---------- FUNCIONES ----------
 async function buscarUsuario() {
   const ced = cedulaInput.value.trim();
   if (!ced) { errorMsg.textContent = 'Escribe tu cédula'; return; }
 
-  // 1. Buscamos todos los registros de la cédula
   const q = query(collection(db, 'usuariosPorFecha'), where('cedula', '==', ced));
   const snap = await getDocs(q);
 
@@ -54,7 +60,7 @@ async function buscarUsuario() {
     return;
   }
 
-  // 2. Sumamos coins y tomamos datos más recientes
+  // Sumamos coins y tomamos datos más recientes
   let totalCoins = 0;
   let fechaMasReciente = '';
   let nombre = '';
@@ -70,7 +76,7 @@ async function buscarUsuario() {
     }
   });
 
-  // 3. RESTAMOS el total de compras ya hechas
+  // RESTAMOS el total de compras ya hechas
   const qCompras = query(collection(db, 'compras'), where('cedula', '==', ced));
   const snapCompras = await getDocs(qCompras);
   let totalGastado = 0;
@@ -80,7 +86,6 @@ async function buscarUsuario() {
 
   const saldoReal = totalCoins - totalGastado;
 
-  // 4. Guardamos valores globales
   userCed = ced;
   coinsUsuario = saldoReal;
 
@@ -173,14 +178,17 @@ function actualizarCarrito() {
   });
   bolsaSpan.textContent = `${carrito.length} · ${total} c`;
 
+  // Botón sin evento (la delegación lo hará)
   if (carrito.length && !document.getElementById('btnFin')) {
     const btn = document.createElement('button');
     btn.id = 'btnFin';
     btn.textContent = 'Finalizar compra';
-    btn.onclick = abrirModal;
     carritoList.after(btn);
   }
-  if (!carrito.length) document.getElementById('btnFin')?.remove();
+  if (!carrito.length) {
+    const old = document.getElementById('btnFin');
+    if (old) old.remove();
+  }
 }
 
 // ---------- MODAL ----------
@@ -214,7 +222,6 @@ async function confirmarCompra() {
   let restante = total;
   for (const doc of docs) {
     if (restante <= 0) break;
-
     const disponible = doc.coins_ganados;
     const aDescontar = Math.min(disponible, restante);
 
