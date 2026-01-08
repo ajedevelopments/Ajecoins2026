@@ -38,8 +38,17 @@
 
   <section>
     <h2>Usuarios cargados</h2>
-    <!-- BOTÓN EXPORTAR USUARIOS -->
+
+    <!-- FILTRO POR FECHA -->
+    <div style="margin-bottom:10px;">
+      <label for="filtroFecha">Filtrar por fecha:</label>
+      <input type="date" id="filtroFecha" />
+      <button id="btnFiltrar">Filtrar</button>
+      <button id="btnVerTodo">Ver todo</button>
+    </div>
+
     <button id="btnExportUsers" class="btn btn-secondary mb-2">Exportar usuarios CSV</button>
+
     <table id="usersTable">
       <thead>
         <tr>
