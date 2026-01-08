@@ -15,17 +15,30 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
-// ----------- USUARIOS  NUEVA LÓGICA  “usuariosPorFecha” -----------
+// ----------- USUARIOS  (colección usuariosPorFecha) -----------
 const fileInput = document.getElementById("fileInput");
 const uploadBtn = document.getElementById("uploadBtn");
 const usersBody = document.querySelector("#usersTable tbody");
+
+function pintarTablaUsuarios(lista) {
+  usersBody.innerHTML = lista
+    .sort((a, b) => new Date(a.fecha) - new Date(b.fecha) || a.cedula.localeCompare(b.cedula))
+    .map(u => `
+      <tr>
+        <td>${u.fecha}</td>
+        <td>${u.cedula}</td>
+        <td>${u.nombre}</td>
+        <td>${u.cedis}</td>
+        <td>${u.coins_ganados}</td>
+      </tr>`).join("");
+}
 
 uploadBtn.addEventListener("click", async () => {
   const file = fileInput.files[0];
   if (!file) return alert("Selecciona el CSV de usuarios");
 
   const text  = await file.text();
-  const lines = text.trim().split("\n").slice(1);   // saltar encabezado
+  const lines = text.trim().split("\n").slice(1);
 
   const fechasEnArchivo = new Set();
   for (const line of lines) {
@@ -37,7 +50,7 @@ uploadBtn.addEventListener("click", async () => {
     return;
   }
 
-  // 1. Borrar solo las fechas que vienen en el archivo
+  // Borrar solo las fechas que vienen en el archivo
   for (const fecha of fechasEnArchivo) {
     const q = query(collection(db, "usuariosPorFecha"), where("fecha", "==", fecha));
     const snap = await getDocs(q);
@@ -46,7 +59,7 @@ uploadBtn.addEventListener("click", async () => {
     }
   }
 
-  // 2. Subir y guardar en un array local
+  // Subir y mostrar al instante
   const subidos = [];
   for (const line of lines) {
     const parts = line.trim().split(";");
@@ -64,34 +77,32 @@ uploadBtn.addEventListener("click", async () => {
     subidos.push(reg);
   }
 
-  // 3. Pintar la tabla con los datos que YA tenemos (sin esperar índice)
-  subidos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha) || a.cedula.localeCompare(b.cedula));
-  usersBody.innerHTML = subidos.map(u => `
-      <tr>
-        <td>${u.fecha}</td>
-        <td>${u.cedula}</td>
-        <td>${u.nombre}</td>
-        <td>${u.cedis}</td>
-        <td>${u.coins_ganados}</td>
-      </tr>`).join("");
-
+  pintarTablaUsuarios(subidos);
   alert(`Archivo procesado: ${subidos.length} registros (${fechasEnArchivo.size} fechas)`);
 });
 
 async function loadUsers() {
-  usersBody.innerHTML = "";
   const snap = await getDocs(collection(db, "usuariosPorFecha"));
   const usuarios = [];
   snap.forEach(d => usuarios.push(d.data()));
-  usuarios.sort((a, b) => new Date(a.fecha) - new Date(b.fecha) || a.cedula.localeCompare(b.cedula));
-  usersBody.innerHTML = usuarios.map(u => `
-      <tr>
-        <td>${u.fecha}</td>
-        <td>${u.cedula}</td>
-        <td>${u.nombre}</td>
-        <td>${u.cedis}</td>
-        <td>${u.coins_ganados}</td>
-      </tr>`).join("");
+  pintarTablaUsuarios(usuarios);
+}
+
+// ----------- EXPORTAR USUARIOS -----------
+function exportarUsuariosCSV() {
+  let csv = 'Fecha,Cedula,Nombre,Cedis,Coins_Ganados\n';
+  const filas = Array.from(usersBody.querySelectorAll('tr'));
+  filas.forEach(r => {
+    const celdas = Array.from(r.querySelectorAll('td')).map(td =>
+      td.textContent.replace(/,/g, ' ').trim()
+    );
+    csv += celdas.join(',') + '\n';
+  });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'usuariosPorFecha.csv';
+  link.click();
 }
 
 // ----------- PRODUCTOS -----------
@@ -177,3 +188,7 @@ function exportarComprasCSV(){
 loadProducts();
 loadUsers();
 loadCompras();
+
+// botón exportar usuarios (agrega el botón en admin.html con id="btnExportUsers")
+const btnExportUsers = document.getElementById('btnExportUsers');
+if (btnExportUsers) btnExportUsers.addEventListener('click', exportarUsuariosCSV);
