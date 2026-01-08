@@ -27,7 +27,6 @@ uploadBtn.addEventListener("click", async () => {
   const text  = await file.text();
   const lines = text.trim().split("\n").slice(1);   // saltar encabezado
 
-  // 1. Detectar todas las fechas que VIENEN en este archivo
   const fechasEnArchivo = new Set();
   for (const line of lines) {
     const p = line.trim().split(";");
@@ -38,36 +37,45 @@ uploadBtn.addEventListener("click", async () => {
     return;
   }
 
-  // 2. Borrar SOLAMENTE los documentos cuya fecha esté en el archivo
+  // 1. Borrar solo las fechas que vienen en el archivo
   for (const fecha of fechasEnArchivo) {
-    const q   = query(collection(db, "usuariosPorFecha"), where("fecha", "==", fecha));
+    const q = query(collection(db, "usuariosPorFecha"), where("fecha", "==", fecha));
     const snap = await getDocs(q);
     for (const docSnap of snap.docs) {
       await deleteDoc(doc(db, "usuariosPorFecha", docSnap.id));
     }
-    console.log(`Registros de ${fecha} borrados previamente`);
   }
 
-  // 3. Subir todas las líneas válidas (fecha + cédula = id único)
-  let creados = 0;
+  // 2. Subir y guardar en un array local
+  const subidos = [];
   for (const line of lines) {
     const parts = line.trim().split(";");
     if (parts.length < 5 || parts[0].trim() === "" || parts[1].trim() === "") continue;
-
     const [fecha, cedula, nombre, cedis, coins_ganados] = parts.map(x => x.trim());
-    const docId = `${fecha}_${cedula}`;          // ID compuesto
-    await setDoc(doc(db, "usuariosPorFecha", docId), {
+    const docId = `${fecha}_${cedula}`;
+    const reg = {
       fecha,
       cedula,
       nombre,
       cedis,
       coins_ganados: parseInt(coins_ganados, 10)
-    });
-    creados++;
+    };
+    await setDoc(doc(db, "usuariosPorFecha", docId), reg);
+    subidos.push(reg);
   }
 
-  alert(`Archivo procesado: ${creados} registros (${fechasEnArchivo.size} fechas)`);
-  loadUsers();
+  // 3. Pintar la tabla con los datos que YA tenemos (sin esperar índice)
+  subidos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha) || a.cedula.localeCompare(b.cedula));
+  usersBody.innerHTML = subidos.map(u => `
+      <tr>
+        <td>${u.fecha}</td>
+        <td>${u.cedula}</td>
+        <td>${u.nombre}</td>
+        <td>${u.cedis}</td>
+        <td>${u.coins_ganados}</td>
+      </tr>`).join("");
+
+  alert(`Archivo procesado: ${subidos.length} registros (${fechasEnArchivo.size} fechas)`);
 });
 
 async function loadUsers() {
@@ -75,31 +83,28 @@ async function loadUsers() {
   const snap = await getDocs(collection(db, "usuariosPorFecha"));
   const usuarios = [];
   snap.forEach(d => usuarios.push(d.data()));
-  // ordenar cronológico
   usuarios.sort((a, b) => new Date(a.fecha) - new Date(b.fecha) || a.cedula.localeCompare(b.cedula));
-  usuarios.forEach(u => {
-    usersBody.innerHTML += `
+  usersBody.innerHTML = usuarios.map(u => `
       <tr>
         <td>${u.fecha}</td>
         <td>${u.cedula}</td>
         <td>${u.nombre}</td>
         <td>${u.cedis}</td>
         <td>${u.coins_ganados}</td>
-      </tr>`;
-  });
+      </tr>`).join("");
 }
 
 // ----------- PRODUCTOS -----------
 const productFileInput = document.getElementById("productFileInput");
 const uploadProductBtn = document.getElementById("uploadProductBtn");
-const productsBody = document.querySelector("#productsTable tbody");
+const productsBody     = document.querySelector("#productsTable tbody");
 
 uploadProductBtn.addEventListener("click", async () => {
   const file = productFileInput.files[0];
   if (!file) return alert("Selecciona el CSV de productos");
-  const text = await file.text();
+  const text  = await file.text();
   const lines = text.trim().split("\n");
-  let first = true;
+  let first   = true;
   for (const line of lines) {
     if (first) { first = false; continue; }
     const clean = line.trim().replace(/"/g, "");
