@@ -34,17 +34,17 @@ let coinsUsuario = 0;
 let carrito = [];
 let userCed = '';
 
+// 🔒 bandera anti-doble-clic
+let procesando = false;
+
 // ---------- EVENTOS ----------
 ingresarBtn.addEventListener('click', buscarUsuario);
 cerrarBtn.addEventListener('click', () => location.reload());
 document.getElementById('btnConfirmar').addEventListener('click', confirmarCompra);
 document.getElementById('btnCancelar').addEventListener('click', cerrarModal);
 
-// Delegación de evento para botón "Finalizar compra" (SIEMPRE funciona)
 document.addEventListener('click', e => {
-  if (e.target && e.target.id === 'btnFin') {
-    abrirModal();
-  }
+  if (e.target && e.target.id === 'btnFin') abrirModal();
 });
 
 // ---------- FUNCIONES ----------
@@ -54,17 +54,9 @@ async function buscarUsuario() {
 
   const q = query(collection(db, 'usuariosPorFecha'), where('cedula', '==', ced));
   const snap = await getDocs(q);
+  if (snap.empty) { errorMsg.textContent = 'Cédula no encontrada'; return; }
 
-  if (snap.empty) {
-    errorMsg.textContent = 'Cédula no encontrada';
-    return;
-  }
-
-  let totalCoins = 0;
-  let fechaMasReciente = '';
-  let nombre = '';
-  let cedis  = '';
-
+  let totalCoins = 0, fechaMasReciente = '', nombre = '', cedis = '';
   snap.forEach(doc => {
     const data = doc.data();
     totalCoins += data.coins_ganados;
@@ -78,37 +70,24 @@ async function buscarUsuario() {
   const qCompras = query(collection(db, 'compras'), where('cedula', '==', ced));
   const snapCompras = await getDocs(qCompras);
   let totalGastado = 0;
-  snapCompras.forEach(doc => {
-    totalGastado += doc.data().total;
-  });
+  snapCompras.forEach(doc => { totalGastado += doc.data().total; });
 
   const saldoReal = totalCoins - totalGastado;
-
   userCed = ced;
   coinsUsuario = saldoReal;
-
-  mostrarDatos({
-    fecha: fechaMasReciente,
-    cedula: ced,
-    nombre: nombre,
-    cedis: cedis,
-    coins_ganados: saldoReal
-  });
-
+  mostrarDatos({ fecha: fechaMasReciente, cedula: ced, nombre, cedis, coins_ganados: saldoReal });
   cargarHistorial();
 }
 
 function mostrarDatos(u) {
   loginCard.classList.add('hidden');
   cuentaCard.classList.remove('hidden');
-
   datosUl.innerHTML = `
     <li><strong>Fecha:</strong> ${u.fecha}</li>
     <li><strong>Cédula:</strong> ${u.cedula}</li>
     <li><strong>Nombre:</strong> ${u.nombre}</li>
     <li><strong>Cedis:</strong> ${u.cedis}</li>
   `;
-
   coinsP.textContent = u.coins_ganados;
   coinsUsuario = u.coins_ganados;
   cargarProductos();
@@ -122,22 +101,17 @@ async function cargarProductos() {
     const p = doc.data();
     const tarj = document.createElement('div');
     tarj.className = 'tarjeta';
-
     const img = document.createElement('img');
     img.src = `assets/productos/${p.producto}.png`;
     img.onerror = () => img.src = `assets/productos/${p.producto}.jpg`;
-
     const h4 = document.createElement('h4');
     h4.textContent = p.producto;
-
     const precioDiv = document.createElement('div');
     precioDiv.className = 'precio';
     precioDiv.textContent = `${p.coins} coins`;
-
     const btn = document.createElement('button');
     btn.textContent = 'Agregar';
     btn.onclick = () => agregarAlCarrito(p.producto, p.coins);
-
     tarj.append(img, h4, precioDiv, btn);
     tiendaDiv.appendChild(tarj);
   });
@@ -147,10 +121,7 @@ async function cargarHistorial() {
   historialList.innerHTML = '';
   const q = query(collection(db, 'compras'), where('cedula', '==', userCed));
   const snap = await getDocs(q);
-  if (snap.empty) {
-    historialList.innerHTML = '<li style="text-align:center;color:#777;">Sin compras</li>';
-    return;
-  }
+  if (snap.empty) { historialList.innerHTML = '<li style="text-align:center;color:#777;">Sin compras</li>'; return; }
   snap.forEach(doc => {
     const c = doc.data();
     const fecha = c.fecha?.toDate().toLocaleString('es-EC') || '-';
@@ -175,16 +146,13 @@ function actualizarCarrito() {
     carritoList.innerHTML += `<li>${item.nombre} <span>${item.precio} c</span></li>`;
   });
   bolsaSpan.textContent = `${carrito.length} · ${total} c`;
-
-  if (carrito.length && !document.getElementById('btnFin')) {
+  const oldBtn = document.getElementById('btnFin');
+  if (oldBtn) oldBtn.remove();
+  if (carrito.length) {
     const btn = document.createElement('button');
     btn.id = 'btnFin';
     btn.textContent = 'Finalizar compra';
     carritoList.after(btn);
-  }
-  if (!carrito.length) {
-    const old = document.getElementById('btnFin');
-    if (old) old.remove();
   }
 }
 
@@ -199,17 +167,24 @@ function cerrarModal() {
   document.getElementById('modalFin').classList.add('hidden');
 }
 
-// ---------- COMPRA ----------
+// ---------- COMPRA (con protección doble-clic) ----------
 async function confirmarCompra() {
+  if (procesando) return;               // evita segundo clic
+  procesando = true;
+
   const btnConfirmar = document.getElementById('btnConfirmar');
-  const btnCancelar = document.getElementById('btnCancelar');
+  const btnCancelar  = document.getElementById('btnCancelar');
   const total = carrito.reduce((t, i) => t + i.precio, 0);
 
-  if (total > coinsUsuario) return alert('Fondos insuficientes');
+  if (total > coinsUsuario) {
+    alert('Fondos insuficientes');
+    procesando = false;
+    return;
+  }
 
-  // 🔒 Deshabilitar botones y cambiar texto
+  // UI en proceso
   btnConfirmar.disabled = true;
-  btnCancelar.disabled = true;
+  btnCancelar.disabled  = true;
   btnConfirmar.innerHTML = '<span class="spinner"></span> Procesando...';
 
   try {
@@ -234,7 +209,7 @@ async function confirmarCompra() {
     await addDoc(collection(db, 'compras'), {
       cedula: userCed,
       nombre: datosUl.querySelector('li:nth-child(3)').textContent.replace('Nombre: ', ''),
-      cedis: datosUl.querySelector('li:nth-child(4)').textContent.replace('Cedis: ', ''),
+      cedis:  datosUl.querySelector('li:nth-child(4)').textContent.replace('Cedis: ', ''),
       items: carrito,
       total: total,
       fecha: serverTimestamp()
@@ -248,12 +223,13 @@ async function confirmarCompra() {
     mostrarToast();
     cargarHistorial();
   } catch (err) {
-    console.error('Error al procesar compra:', err);
-    alert('Ocurrió un error al procesar la compra. Inténtalo de nuevo.');
+    console.error(err);
+    alert('Error al procesar la compra. Inténtalo de nuevo.');
   } finally {
     btnConfirmar.disabled = false;
-    btnCancelar.disabled = false;
+    btnCancelar.disabled  = false;
     btnConfirmar.textContent = 'Confirmar';
+    procesando = false;
   }
 }
 
