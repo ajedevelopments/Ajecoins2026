@@ -60,7 +60,6 @@ async function buscarUsuario() {
     return;
   }
 
-  // Sumamos coins y tomamos datos más recientes
   let totalCoins = 0;
   let fechaMasReciente = '';
   let nombre = '';
@@ -76,7 +75,6 @@ async function buscarUsuario() {
     }
   });
 
-  // RESTAMOS el total de compras ya hechas
   const qCompras = query(collection(db, 'compras'), where('cedula', '==', ced));
   const snapCompras = await getDocs(qCompras);
   let totalGastado = 0;
@@ -178,7 +176,6 @@ function actualizarCarrito() {
   });
   bolsaSpan.textContent = `${carrito.length} · ${total} c`;
 
-  // Botón sin evento (la delegación lo hará)
   if (carrito.length && !document.getElementById('btnFin')) {
     const btn = document.createElement('button');
     btn.id = 'btnFin';
@@ -202,53 +199,62 @@ function cerrarModal() {
   document.getElementById('modalFin').classList.add('hidden');
 }
 
-// ---------- COMPRA: DESCUENTA DE TODAS LAS FECHAS (SIN ÍNDICE) ----------
+// ---------- COMPRA ----------
 async function confirmarCompra() {
+  const btnConfirmar = document.getElementById('btnConfirmar');
+  const btnCancelar = document.getElementById('btnCancelar');
   const total = carrito.reduce((t, i) => t + i.precio, 0);
+
   if (total > coinsUsuario) return alert('Fondos insuficientes');
 
-  // 1. Traer todos los docs de la cédula (sin índice)
-  const q = query(
-    collection(db, 'usuariosPorFecha'),
-    where('cedula', '==', userCed)
-  );
-  const snap = await getDocs(q);
-  const docs = [];
-  snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
-  docs.sort((a, b) => new Date(b.fecha) - new Date(a.fecha)); // más reciente primero
+  // 🔒 Deshabilitar botones y cambiar texto
+  btnConfirmar.disabled = true;
+  btnCancelar.disabled = true;
+  btnConfirmar.innerHTML = '<span class="spinner"></span> Procesando...';
 
-  // 2. Descontar proporcionalmente (saltando los que ya están en 0)
-  let restante = total;
-  for (const docData of docs) { // ✅ cambiamos el nombre
-  if (restante <= 0) break;
-  const disponible = docData.coins_ganados;
-  if (disponible <= 0) continue;
+  try {
+    const q = query(collection(db, 'usuariosPorFecha'), where('cedula', '==', userCed));
+    const snap = await getDocs(q);
+    const docs = [];
+    snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
+    docs.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
-  const aDescontar = Math.min(disponible, restante);
-  await updateDoc(doc(db, 'usuariosPorFecha', docData.id), { // ✅ ahora sí funciona
-    coins_ganados: disponible - aDescontar
-  });
-  restante -= aDescontar;
-}
+    let restante = total;
+    for (const docData of docs) {
+      if (restante <= 0) break;
+      const disponible = docData.coins_ganados;
+      if (disponible <= 0) continue;
+      const aDescontar = Math.min(disponible, restante);
+      await updateDoc(doc(db, 'usuariosPorFecha', docData.id), {
+        coins_ganados: disponible - aDescontar
+      });
+      restante -= aDescontar;
+    }
 
-  // 3. Guardar la compra
-  await addDoc(collection(db, 'compras'), {
-    cedula: userCed,
-    nombre: datosUl.querySelector('li:nth-child(3)').textContent.replace('Nombre: ', ''),
-    cedis: datosUl.querySelector('li:nth-child(4)').textContent.replace('Cedis: ', ''),
-    items: carrito,
-    total: total,
-    fecha: serverTimestamp()
-  });
+    await addDoc(collection(db, 'compras'), {
+      cedula: userCed,
+      nombre: datosUl.querySelector('li:nth-child(3)').textContent.replace('Nombre: ', ''),
+      cedis: datosUl.querySelector('li:nth-child(4)').textContent.replace('Cedis: ', ''),
+      items: carrito,
+      total: total,
+      fecha: serverTimestamp()
+    });
 
-  // 4. Actualizar UI
-  coinsUsuario -= total;
-  coinsP.textContent = coinsUsuario;
-  carrito = [];
-  actualizarCarrito();
-  cerrarModal();
-  mostrarToast();
-  cargarHistorial();
+    coinsUsuario -= total;
+    coinsP.textContent = coinsUsuario;
+    carrito = [];
+    actualizarCarrito();
+    cerrarModal();
+    mostrarToast();
+    cargarHistorial();
+  } catch (err) {
+    console.error('Error al procesar compra:', err);
+    alert('Ocurrió un error al procesar la compra. Inténtalo de nuevo.');
+  } finally {
+    btnConfirmar.disabled = false;
+    btnCancelar.disabled = false;
+    btnConfirmar.textContent = 'Confirmar';
+  }
 }
 
 function mostrarToast() {
