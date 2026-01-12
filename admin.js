@@ -239,7 +239,7 @@ async function cargarMovimientosTodos() {
       concepto: "Ganado por archivo",
       coins: g.coins_ganados,
       signo: 1
-    ]);
+    });
   });
 
   // 2. TODOS los canjes
