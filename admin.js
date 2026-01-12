@@ -30,10 +30,12 @@ const filtroFecha = document.getElementById("filtroFecha");
 const btnFiltrar  = document.getElementById("btnFiltrar");
 const btnVerTodo  = document.getElementById("btnVerTodo");
 
-// ----------- PRODUCTOS -----------
-const productFileInput = document.getElementById("productFileInput");
-const uploadProductBtn = document.getElementById("uploadProductBtn");
-const productsBody     = document.querySelector("#productsTable tbody");
+// ----------- MOVIMIENTOS -----------
+const movBody      = document.querySelector("#movTable tbody");
+const btnVerMov    = document.getElementById("btnVerMov");
+const btnExportMov = document.getElementById("btnExportMov");
+const btnExportAll = document.getElementById("btnExportAllMov");
+const movCedula    = document.getElementById("movCedula");
 
 // ----------- HISTORIAL -----------
 const comprasBody = document.querySelector('#comprasTable tbody');
@@ -45,19 +47,12 @@ const detCedula     = document.getElementById('detCedula');
 const detalleBody   = document.querySelector('#detalleTable tbody');
 const cerrarDetalle = document.getElementById('cerrarDetalle');
 
-// ----------- MOVIMIENTOS -----------
-const movBody      = document.querySelector("#movTable tbody");
-const btnVerMov    = document.getElementById("btnVerMov");
-const btnExportMov = document.getElementById("btnExportMov");
-const btnExportAll = document.getElementById("btnExportAllMov");
-const movCedula    = document.getElementById("movCedula");
-
 // ---------- FUNCIONES ----------
 function pintarTablaUsuarios(lista) {
   usersBody.innerHTML = lista
     .sort((a, b) => new Date(a.fecha) - new Date(b.fecha) || a.cedula.localeCompare(b.cedula))
     .map(u => `
-      <tr class="clickable">
+      <tr>
         <td>${u.fecha}</td>
         <td>${u.cedula}</td>
         <td>${u.nombre}</td>
@@ -177,12 +172,14 @@ async function cargarMovimientos(cedula) {
   if (!cedula) return alert("Escribe una cédula");
   movBody.innerHTML = "<tr><td colspan='5'>Cargando...</td></tr>";
 
-  // 1. Ganancias (por fecha de archivo)
+  // 1. Ganancias (valor del archivo, sin tocar)
   const qGan = query(collection(db, "usuariosPorFecha"), where("cedula", "==", cedula));
   const ganSnap = await getDocs(qGan);
   const movs = [];
+  let totalGanado = 0;
   ganSnap.forEach(d => {
     const g = d.data();
+    totalGanado += g.coins_ganados;
     movs.push({
       fecha: g.fecha,
       concepto: "Ganado por archivo",
@@ -191,7 +188,7 @@ async function cargarMovimientos(cedula) {
     });
   });
 
-  // 2. Canjes (por fecha de compra)
+  // 2. Canjes (resta una sola vez, por fecha real)
   const qCan = query(collection(db, "compras"), where("cedula", "==", cedula));
   const canSnap = await getDocs(qCan);
   canSnap.forEach(d => {
@@ -205,7 +202,7 @@ async function cargarMovimientos(cedula) {
     });
   });
 
-  // 3. Ordenar cronológicamente y calcular saldo
+  // 3. Ordenar y calcular saldo
   movs.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
   let saldo = 0;
   let html = "";
@@ -213,6 +210,7 @@ async function cargarMovimientos(cedula) {
     saldo += m.coins * m.signo;
     html += `
       <tr>
+        <td>${cedula}</td>
         <td>${m.fecha}</td>
         <td>${m.concepto}</td>
         <td>${m.signo === 1 ? "+" : "-"}${m.coins}</td>
@@ -291,7 +289,6 @@ btnVerMov.addEventListener("click", () => cargarMovimientos(movCedula.value.trim
 btnExportMov.addEventListener("click", exportarMovCSV);
 btnExportAll.addEventListener("click", () => {
   cargarMovimientosTodos();
-  // esperamos a que pinte y luego exportamos
   setTimeout(() => {
     movCedula.value = "todos";
     exportarMovCSV();
