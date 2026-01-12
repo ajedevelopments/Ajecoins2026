@@ -57,8 +57,6 @@
           <th>Nombre</th>
           <th>Cedis</th>
           <th>Coins ganados</th>
-          <th>Coins canjeados</th>
-          <th>Coins totales</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -99,15 +97,17 @@
     <button id="cerrarDetalle">Cerrar</button>
   </dialog>
 
-  <!-- MOVIMIENTOS POR USUARIO (CRONOLÓGICO) -->
+  <!-- MOVIMIENTOS POR USUARIO -->
   <section>
     <h2>Movimientos por usuario</h2>
     <label>Cédula: <input type="text" id="movCedula" placeholder="932064983" /></label>
     <button id="btnVerMov">Ver movimientos</button>
-    <button id="btnExportMov" class="btn btn-secondary">Exportar CSV</button>
+    <button id="btnExportMov" class="btn btn-secondary">Exportar esta cédula</button>
+    <button id="btnExportAllMov" class="btn btn-secondary">Exportar TODOS los usuarios</button>
     <table id="movTable">
       <thead>
         <tr>
+          <th>Cédula</th>
           <th>Fecha</th>
           <th>Concepto</th>
           <th>Coins</th>
