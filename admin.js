@@ -170,6 +170,80 @@ async function calcularSaldo(cedula){
   return ingreso-gasto;
 }
 
+
+/* =================== MOVIMIENTOS POR USUARIO =================== */
+
+const movCedula = document.getElementById("movCedula");
+const btnVerMov = document.getElementById("btnVerMov");
+const movBody   = document.querySelector("#movTable tbody");
+
+btnVerMov.addEventListener("click", async ()=>{
+  const ced = movCedula.value.trim();
+  if(!ced) return alert("Ingresa una cédula");
+
+  movBody.innerHTML = "<tr><td colspan='5'>Cargando…</td></tr>";
+
+  // 1. INGRESOS
+  const ingresosSnap = await getDocs(
+    query(collection(db,"usuariosPorFecha"), where("cedula","==",ced))
+  );
+
+  let movimientos = [];
+
+  ingresosSnap.forEach(d=>{
+    const u = d.data();
+    movimientos.push({
+      cedula: u.cedula,
+      fecha: u.fecha,
+      concepto: "Carga de coins",
+      coins: u.coins_ganados,
+      tipo: "ingreso"
+    });
+  });
+
+  // 2. EGRESOS
+  const comprasSnap = await getDocs(
+    query(collection(db,"compras"), where("cedula","==",ced))
+  );
+
+  comprasSnap.forEach(d=>{
+    const c = d.data();
+    movimientos.push({
+      cedula: c.cedula,
+      fecha: c.fecha.toDate().toISOString().slice(0,10),
+      concepto: c.items.map(i=>i.nombre).join(", "),
+      coins: -c.total,
+      tipo: "gasto"
+    });
+  });
+
+  // 3. ORDENAR POR FECHA
+  movimientos.sort((a,b)=> new Date(a.fecha) - new Date(b.fecha));
+
+  // 4. CALCULAR SALDO
+  let saldo = 0;
+  movBody.innerHTML = "";
+
+  for(const m of movimientos){
+    saldo += m.coins;
+
+    movBody.innerHTML += `
+      <tr>
+        <td>${m.cedula}</td>
+        <td>${m.fecha}</td>
+        <td>${m.concepto}</td>
+        <td style="color:${m.coins>=0?'green':'red'}">${m.coins}</td>
+        <td>${saldo}</td>
+      </tr>
+    `;
+  }
+
+  if(movimientos.length===0){
+    movBody.innerHTML = "<tr><td colspan='5'>Sin movimientos</td></tr>";
+  }
+});
+
+
 /* =================== INIT =================== */
 
 loadUsers();
