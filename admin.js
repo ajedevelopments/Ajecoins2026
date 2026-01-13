@@ -22,15 +22,18 @@ let userCed = '';
 
 // ---------- ELEMENTOS ----------
 const loginCard   = document.getElementById('login');
-const cuentaInput = document.getElementById('IdCedis'); // ajusta si usas otro ID
 const cedulaInput = document.getElementById('cedulaInput');
-const btnIngresar = document.getElementById('ingresarBtn');
-const cerrarBtn   = document.getElementById('IdCedis'); // ajusta si usas otro ID
-const btnVerMov    = document.getElementById('btnVerMov');
-const btnExportMov = document.getElementById('btnExportMov');
-const btnExportAll = document.getElementById('btnExportAllMov');
-const movCedula    = document.getElementById('movCedula');
-const movBody      = document.querySelector("#movTable tbody");
+const ingresarBtn = document.getElementById('ingresarBtn');
+const cerrarBtn   = document.getElementById('cerrarBtn');
+const usersBody   = document.querySelector("#usersTable tbody");
+const filtroFecha = document.getElementById("filtroFecha");
+const btnFiltrar  = document.getElementById("btnFiltrar");
+const btnVerTodo  = document.getElementById("btnVerTodo");
+const movCedula   = document.getElementById('movCedula');
+const movBody     = document.querySelector("#movTable tbody");
+const detalleDialog = document.getElementById('detalleDialog');
+const detCedula   = document.getElementById('detCedula');
+const detalleBody = document.querySelector('#detalleTable tbody');
 
 // ---------- FUNCIONES AUXILIARES ----------
 function normalizarFecha(fecha) {
@@ -39,13 +42,13 @@ function normalizarFecha(fecha) {
 }
 
 // ---------- USUARIOS (ADMIN) ----------
-const usersBody   = document.querySelector("#usersTable tbody");
-const filtroFecha = document.getElementById("filtroFecha");
-const btnFiltrar  = document.getElementById("btnFiltrar");
-const btnVerTodo  = document.getElementById("btnVerTodo");
-
-function pintarTablaUsuarios(lista) {
-  usersBody.innerHTML = lista
+async function loadUsers(fecha = null) {
+  let q = collection(db, "usuariosPorFecha");
+  if (fecha) q = query(q, where("fecha", "==", fecha));
+  const snap = await getDocs(q);
+  const usuarios = [];
+  snap.forEach(d => usuarios.push(d.data()));
+  usersBody.innerHTML = usuarios
     .sort((a, b) => new Date(a.fecha) - new Date(b.fecha) || a.cedula.localeCompare(b.cedula))
     .map(u => `
       <tr>
@@ -57,71 +60,7 @@ function pintarTablaUsuarios(lista) {
       </tr>`).join("");
 }
 
-async function loadUsers(fecha = null) {
-  let q = collection(db, "usuariosPorFecha");
-  if (fecha) q = query(q, where("fecha", "==", fecha));
-  const snap = await getDocs(q);
-  const usuarios = [];
-  snap.forEach(d => usuarios.push(d.data()));
-  pintarTablaUsuarios(usuarios);
-}
-
-// ---------- MODAL DETALLE POR FECHA ----------
-const detalleDialog = document.getElementById('detalleDialog');
-const detCedula     = document.getElementById('detCedula');
-const detalleBody   = document.querySelector('#detalleTable tbody');
-const cerrarDetalle = document.getElementById('cerrarDetalle');
-
-async function mostrarDebeHaber(cedula) {
-  detCedula.textContent = cedula;
-  detalleBody.innerHTML = '<tr><td colspan="4">Cargando...</td></tr>';
-  detalleDialog.showModal();
-
-  const qUser = query(collection(db, 'usuariosPorFecha'), where('cedula', '==', cedula));
-  const userSnap = await getDocs(qUser);
-  const registros = [];
-  userSnap.forEach(d => registros.push(d.data()));
-  registros.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-
-  let html = '';
-  for (const r of registros) {
-    html += `
-      <tr>
-        <td>${r.fecha}</td>
-        <td>${r.coins_ganados}</td>
-        <td>-</td>
-        <td>${r.coins_ganados}</td>
-      </tr>`;
-  }
-  detalleBody.innerHTML = html;
-}
-
 // ---------- MOVIMIENTOS POR USUARIO (EVOLUTIVO) ----------
-const movBody      = document.querySelector("#movTable tbody");
-const btnVerMov    = document.getElementById("btnVerMov");
-const btnExportMov = document.getElementById("btnExportMov");
-const btnExportAll = document.getElementById("btnExportAllMov");
-const movCedula    = document.getElementById("movCedula");
-
-if (!btnVerMov) {
-  const section = document.querySelector("section:last-of-type");
-  section.insertAdjacentHTML('afterend', `
-    <section>
-      <h2>Movimientos por usuario</h2>
-      <label>Cédula: <input type="text" id="movCedula" placeholder="932064983" /></label>
-      <button id="btnVerMov">Ver movimientos</button>
-      <button id="btnExportMov" class="btn btn-secondary">Exportar esta cédula</button>
-      <button id="btnExportAllMov" class="btn btn-secondary">Exportar TODOS</button>
-      <table id="movTable"><thead><tr><th>Cedula</th><th>Fecha</th><th>Concepto</th><th>Coins</th><th>Saldo</th></tr></thead><tbody></tbody></table>
-    </section>
-  `);
-  window.movBody      = document.querySelector("#movTable tbody");
-  window.btnVerMov    = document.getElementById("btnVerMov");
-  window.btnExportMov = document.getElementById("btnExportMov");
-  window.btnExportAll = document.getElementById("btnExportAllMov");
-  window.movCedula    = document.getElementById("movCedula");
-}
-
 async function cargarMovimientos(cedula) {
   if (!cedula) return alert("Escribe una cédula");
   movBody.innerHTML = "<tr><td colspan='5'>Cargando...</td></tr>";
@@ -130,10 +69,8 @@ async function cargarMovimientos(cedula) {
   const qGan = query(collection(db, "usuariosPorFecha"), where("cedula", "==", cedula));
   const ganSnap = await getDocs(qGan);
   const movs = [];
-  let totalGanado = 0;
   ganSnap.forEach(d => {
     const g = d.data();
-    totalGanado += g.coins_ganados;
     movs.push({
       cedula: cedula,
       fecha: g.fecha,
@@ -193,6 +130,7 @@ function exportarMovCSV() {
   link.click();
 }
 
+// ---------- EVENTOS ----------
 btnVerMov.addEventListener("click", () => cargarMovimientos(movCedula.value.trim()));
 btnExportMov.addEventListener("click", exportarMovCSV);
 
