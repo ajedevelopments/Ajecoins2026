@@ -1,7 +1,10 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js  ";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
-  getFirestore, collection, query, where, getDocs, addDoc, serverTimestamp
-} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js  ";
+  getFirestore, collection, getDocs, setDoc, doc, deleteDoc,
+  query, where, addDoc, Timestamp
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+/* =================== FIREBASE =================== */
 
 const firebaseConfig = {
   apiKey: "AIzaSyCsz2EP8IsTlG02uU2_GRfyQeeajMDuJjI",
@@ -15,126 +18,161 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ---------- VARIABLES ----------
-let coinsUsuario = 0;
-let carrito = [];
-let userCed = '';
+/* =================== UTIL =================== */
 
-// ---------- ELEMENTOS ----------
-const loginCard   = document.getElementById('login');
-const cedulaInput = document.getElementById('cedulaInput');
-const ingresarBtn = document.getElementById('ingresarBtn');
-const cerrarBtn   = document.getElementById('cerrarBtn');
-const usersBody   = document.querySelector("#usersTable tbody");
-const filtroFecha = document.getElementById("filtroFecha");
-const btnFiltrar  = document.getElementById("btnFiltrar");
-const btnVerTodo  = document.getElementById("btnVerTodo");
-const movCedula   = document.getElementById('movCedula');
-const movBody     = document.querySelector("#movTable tbody");
-const detalleDialog = document.getElementById('detalleDialog');
-const detCedula   = document.getElementById('detCedula');
-const detalleBody = document.querySelector('#detalleTable tbody');
-
-// ---------- FUNCIONES AUXILIARES ----------
-function normalizarFecha(fecha) {
-  const [d, m, y] = fecha.split("/");
-  return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+function normalizarFecha(fecha){
+  const [d,m,y] = fecha.split("/");
+  return `${y}-${m.padStart(2,"0")}-${d.padStart(2,"0")}`;
 }
 
-// ---------- USUARIOS (ADMIN) ----------
-async function loadUsers(fecha = null) {
-  let q = collection(db, "usuariosPorFecha");
-  if (fecha) q = query(q, where("fecha", "==", fecha));
-  const snap = await getDocs(q);
-  const usuarios = [];
-  snap.forEach(d => usuarios.push(d.data()));
-  usersBody.innerHTML = usuarios
-    .sort((a, b) => new Date(a.fecha) - new Date(b.fecha) || a.cedula.localeCompare(b.cedula))
-    .map(u => `
+/* =================== CARGA CSV =================== */
+
+const fileInput = document.getElementById("fileInput");
+const uploadBtn = document.getElementById("uploadBtn");
+
+uploadBtn.addEventListener("click", async()=>{
+  const file = fileInput.files[0];
+  if(!file) return alert("Selecciona CSV");
+
+  const text = await file.text();
+  const lines = text.trim().split("\n").slice(1);
+
+  let subidos = 0;
+
+  for(const line of lines){
+    const [fechaRaw, cedula, nombre, cedis, coins] = line.split(";").map(x=>x.trim());
+    if(!fechaRaw || !cedula) continue;
+
+    const fecha = normalizarFecha(fechaRaw);
+
+    // ID único por día → NO SE BORRA JAMÁS
+    const id = `${fecha}_${cedula}`;
+
+    const ref = doc(db,"usuariosPorFecha",id);
+    const snap = await getDocs(query(collection(db,"usuariosPorFecha"), where("__name__","==",id)));
+
+    // Solo se escribe si NO existe (protege historia)
+    if(snap.empty){
+      await setDoc(ref,{
+        fecha,
+        cedula,
+        nombre,
+        cedis,
+        coins_ganados: parseInt(coins,10),
+        creado: Timestamp.now()
+      });
+      subidos++;
+    }
+  }
+
+  alert(`Movimientos nuevos registrados: ${subidos}`);
+  loadUsers();
+});
+
+/* =================== USUARIOS =================== */
+
+const usersBody = document.querySelector("#usersTable tbody");
+
+async function loadUsers(){
+  usersBody.innerHTML = "";
+  const snap = await getDocs(collection(db,"usuariosPorFecha"));
+  snap.forEach(d=>{
+    const u = d.data();
+    usersBody.innerHTML += `
       <tr>
         <td>${u.fecha}</td>
         <td>${u.cedula}</td>
         <td>${u.nombre}</td>
         <td>${u.cedis}</td>
         <td>${u.coins_ganados}</td>
-      </tr>`).join("");
-}
-
-// ---------- MOVIMIENTOS POR USUARIO (EVOLUTIVO) ----------
-async function cargarMovimientos(cedula) {
-  if (!cedula) return alert("Escribe una cédula");
-  movBody.innerHTML = "<tr><td colspan='5'>Cargando...</td></tr>";
-
-  // 1. Ganancias (sin tocar el valor del archivo)
-  const qGan = query(collection(db, "usuariosPorFecha"), where("cedula", "==", cedula));
-  const ganSnap = await getDocs(qGan);
-  const movs = [];
-  ganSnap.forEach(d => {
-    const g = d.data();
-    movs.push({
-      cedula: cedula,
-      fecha: g.fecha,
-      concepto: "Ganado por archivo",
-      coins: g.coins_ganados,
-      signo: 1
-    });
-  });
-
-  // 2. Canjes (resta aparte, sin modificar el original)
-  const qCan = query(collection(db, "compras"), where("cedula", "==", cedula));
-  const canSnap = await getDocs(qCan);
-  canSnap.forEach(d => {
-    const c = d.data();
-    const productos = c.items.map(i => i.nombre).join(", ");
-    movs.push({
-      cedula: cedula,
-      fecha: c.fecha.toDate().toISOString().slice(0,10),
-      concepto: `Canje: ${productos}`,
-      coins: c.total,
-      signo: -1
-    ]);
-  });
-
-  // 3. Ordenar y calcular saldo (sin tocar el original)
-  movs.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-  let saldo = 0;
-  let html = "";
-  for (const m of movs) {
-    saldo += m.coins * m.signo;
-    html += `
-      <tr>
-        <td>${m.cedula}</td>
-        <td>${m.fecha}</td>
-        <td>${m.concepto}</td>
-        <td>${m.signo === 1 ? "+" : "-"}${m.coins}</td>
-        <td>${saldo}</td>
       </tr>`;
-  }
-  movBody.innerHTML = html;
-}
-
-function exportarMovCSV() {
-  const filas = Array.from(movBody.querySelectorAll('tr'));
-  if (filas.length === 0) return alert("No hay datos para exportar");
-  let csv = 'Cedula,Fecha,Concepto,Coins,Saldo\n';
-  filas.forEach(r => {
-    const celdas = Array.from(r.querySelectorAll('td')).map(td =>
-      td.textContent.replace(/,/g, ' ').trim()
-    );
-    csv += celdas.join(',') + '\n';
   });
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = `movimientos_${movCedula.value.trim() || "todos"}.csv`;
-  link.click();
 }
 
-// ---------- EVENTOS ----------
-btnVerMov.addEventListener("click", () => cargarMovimientos(movCedula.value.trim()));
-btnExportMov.addEventListener("click", exportarMovCSV);
+/* =================== PRODUCTOS =================== */
 
-// ---------- INICIAL ----------
-loadProducts();
+const productFileInput = document.getElementById("productFileInput");
+const uploadProductBtn = document.getElementById("uploadProductBtn");
+const productsBody = document.querySelector("#productsTable tbody");
+
+uploadProductBtn.addEventListener("click", async()=>{
+  const file = productFileInput.files[0];
+  if(!file) return alert("Selecciona CSV productos");
+
+  const text = await file.text();
+  const lines = text.trim().split("\n").slice(1);
+
+  for(const line of lines){
+    const [nombre, coins] = line.replace(/"/g,"").split(";");
+    await setDoc(doc(db,"productos",nombre.trim()),{
+      producto:nombre.trim(),
+      coins:parseInt(coins.trim(),10)
+    });
+  }
+  loadProducts();
+});
+
+async function loadProducts(){
+  productsBody.innerHTML="";
+  const snap = await getDocs(collection(db,"productos"));
+  snap.forEach(d=>{
+    const p=d.data();
+    productsBody.innerHTML+=`
+      <tr>
+        <td>${p.producto}</td>
+        <td><img src="assets/productos/${p.producto}.png" width="80"></td>
+        <td>${p.coins}</td>
+      </tr>`;
+  });
+}
+
+/* =================== COMPRAS =================== */
+
+async function registrarCompra(cedula,nombre,cedis,items,total){
+  await addDoc(collection(db,"compras"),{
+    cedula,nombre,cedis,items,total,
+    fecha:Timestamp.now()
+  });
+}
+
+/* =================== HISTORIAL =================== */
+
+const comprasBody = document.querySelector("#comprasTable tbody");
+
+async function loadCompras(){
+  comprasBody.innerHTML="";
+  const snap = await getDocs(collection(db,"compras"));
+  snap.forEach(d=>{
+    const c=d.data();
+    comprasBody.innerHTML+=`
+      <tr>
+        <td>${c.fecha.toDate().toLocaleString()}</td>
+        <td>${c.cedula}</td>
+        <td>${c.nombre}</td>
+        <td>${c.cedis}</td>
+        <td>${c.items.map(i=>i.nombre).join(", ")}</td>
+        <td>${c.total}</td>
+      </tr>`;
+  });
+}
+
+/* =================== SALDO REAL =================== */
+
+async function calcularSaldo(cedula){
+  let ingreso=0, gasto=0;
+
+  const g1 = await getDocs(query(collection(db,"usuariosPorFecha"), where("cedula","==",cedula)));
+  g1.forEach(d=>ingreso+=d.data().coins_ganados);
+
+  const g2 = await getDocs(query(collection(db,"compras"), where("cedula","==",cedula)));
+  g2.forEach(d=>gasto+=d.data().total);
+
+  return ingreso-gasto;
+}
+
+/* =================== INIT =================== */
+
 loadUsers();
+loadProducts();
 loadCompras();
+
