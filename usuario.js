@@ -25,66 +25,81 @@ const db = getFirestore(app);
 
 /* ================= VARIABLES ================= */
 
-let userCed = "";
+let userCedula = "";
 let coinsUsuario = 0;
 let carrito = [];
 
 /* ================= LOGIN ================= */
 
 document.getElementById("ingresarBtn").addEventListener("click", async () => {
-  const ced = document.getElementById("cedulaInput").value.trim();
-  if (!ced) return alert("Escribe tu cédula");
+  try {
+    const ced = String(document.getElementById("cedulaInput").value.trim());
 
-  userCed = ced;
-
-  // Traer TODOS los movimientos históricos
-  const movSnap = await getDocs(
-    query(collection(db, "usuariosPorFecha"), where("cedula", "==", ced))
-  );
-
-  if (movSnap.empty) {
-    alert("Cédula no existe");
-    return;
-  }
-
-  let totalIngreso = 0;
-  let nombre = "";
-  let cedis = "";
-  let fecha = "";
-
-  movSnap.forEach(d => {
-    const x = d.data();
-    totalIngreso += x.coins_ganados;
-
-    // tomamos los datos más recientes
-    if (!fecha || x.fecha > fecha) {
-      fecha = x.fecha;
-      nombre = x.nombre;
-      cedis = x.cedis;
+    if (!ced) {
+      alert("Ingrese la cédula");
+      return;
     }
-  });
 
-  // Traer compras
-  const comprasSnap = await getDocs(
-    query(collection(db, "compras"), where("cedula", "==", ced))
-  );
+    userCedula = ced;
 
-  let totalGasto = 0;
-  comprasSnap.forEach(d => totalGasto += d.data().total);
+    /* ===== BUSCAR MOVIMIENTOS ===== */
 
-  coinsUsuario = totalIngreso - totalGasto;
+    const movSnap = await getDocs(
+      query(collection(db, "usuariosPorFecha"), where("cedula", "==", ced))
+    );
 
-  // Pintar datos
-  document.getElementById("coins").textContent = coinsUsuario;
-  document.getElementById("datos").innerHTML = `
-    <li><strong>Nombre:</strong> ${nombre}</li>
-    <li><strong>Cédula:</strong> ${ced}</li>
-    <li><strong>Cedis:</strong> ${cedis}</li>
-    <li><strong>Última fecha:</strong> ${fecha}</li>
-  `;
+    if (movSnap.empty) {
+      alert("Cédula no existe");
+      return;
+    }
 
-  cargarProductos();
-  cargarHistorial();
+    let totalIngreso = 0;
+    let nombre = "";
+    let cedis = "";
+    let ultimaFecha = "";
+
+    movSnap.forEach(doc => {
+      const d = doc.data();
+      totalIngreso += Number(d.coins_ganados);
+
+      if (!ultimaFecha || d.fecha > ultimaFecha) {
+        ultimaFecha = d.fecha;
+        nombre = d.nombre;
+        cedis = d.cedis;
+      }
+    });
+
+    /* ===== BUSCAR COMPRAS ===== */
+
+    const comprasSnap = await getDocs(
+      query(collection(db, "compras"), where("cedula", "==", ced))
+    );
+
+    let totalGasto = 0;
+    comprasSnap.forEach(doc => {
+      totalGasto += Number(doc.data().total);
+    });
+
+    coinsUsuario = totalIngreso - totalGasto;
+
+    /* ===== MOSTRAR DATOS ===== */
+
+    document.getElementById("coins").textContent = coinsUsuario;
+
+    document.getElementById("datos").innerHTML = `
+      <li><b>${nombre}</b></li>
+      <li>${ced}</li>
+      <li>${cedis}</li>
+      <li>${ultimaFecha}</li>
+    `;
+
+    await cargarProductos();
+    await cargarHistorial();
+
+  } catch (e) {
+    console.error(e);
+    alert("Error al iniciar sesión");
+  }
 });
 
 /* ================= PRODUCTOS ================= */
@@ -95,30 +110,33 @@ async function cargarProductos() {
 
   const snap = await getDocs(collection(db, "productos"));
 
-  snap.forEach(d => {
-    const p = d.data();
+  snap.forEach(doc => {
+    const p = doc.data();
+
     const card = document.createElement("div");
+    card.className = "producto";
 
-    const img = document.createElement("img");
-    img.src = `assets/productos/${p.producto}.png`;
-    img.onerror = () => img.src = "assets/productos/noimage.png";
-
-    card.appendChild(img);
-    card.innerHTML += `
+    card.innerHTML = `
+      <img src="assets/productos/${p.producto}.png">
       <h4>${p.producto}</h4>
       <b>${p.coins} coins</b>
       <button>Agregar</button>
     `;
 
-    card.querySelector("button").onclick = () => agregar(p.producto, p.coins);
+    card.querySelector("button").onclick = () => agregarProducto(p.producto, p.coins);
+
     div.appendChild(card);
   });
 }
 
 /* ================= CARRITO ================= */
 
-function agregar(nombre, precio) {
-  if (coinsUsuario < precio) return alert("Saldo insuficiente");
+function agregarProducto(nombre, precio) {
+  if (coinsUsuario < precio) {
+    alert("Saldo insuficiente");
+    return;
+  }
+
   carrito.push({ nombre, precio });
   renderCarrito();
 }
@@ -128,9 +146,10 @@ function renderCarrito() {
   ul.innerHTML = "";
 
   let total = 0;
-  carrito.forEach(i => {
-    total += i.precio;
-    ul.innerHTML += `<li>${i.nombre} · ${i.precio} coins</li>`;
+
+  carrito.forEach(p => {
+    total += p.precio;
+    ul.innerHTML += `<li>${p.nombre} - ${p.precio} coins</li>`;
   });
 
   document.getElementById("bolsa").textContent = total;
@@ -139,11 +158,17 @@ function renderCarrito() {
 /* ================= CONFIRMAR COMPRA ================= */
 
 document.getElementById("btnConfirmar").addEventListener("click", async () => {
+  if (carrito.length === 0) return;
+
   const total = carrito.reduce((a, b) => a + b.precio, 0);
-  if (total > coinsUsuario) return alert("Fondos insuficientes");
+
+  if (total > coinsUsuario) {
+    alert("Fondos insuficientes");
+    return;
+  }
 
   await addDoc(collection(db, "compras"), {
-    cedula: userCed,
+    cedula: userCedula,
     items: carrito,
     total: total,
     fecha: serverTimestamp()
@@ -151,26 +176,31 @@ document.getElementById("btnConfirmar").addEventListener("click", async () => {
 
   carrito = [];
   renderCarrito();
-  cargarHistorial();
 
-  // Recalcular saldo real SIN tocar historial
+  await recalcularSaldo();
+  await cargarHistorial();
+});
+
+/* ================= RECALCULAR SALDO ================= */
+
+async function recalcularSaldo() {
   const movSnap = await getDocs(
-    query(collection(db, "usuariosPorFecha"), where("cedula", "==", userCed))
+    query(collection(db, "usuariosPorFecha"), where("cedula", "==", userCedula))
   );
 
   let ingreso = 0;
-  movSnap.forEach(d => ingreso += d.data().coins_ganados);
+  movSnap.forEach(d => ingreso += Number(d.data().coins_ganados));
 
   const comprasSnap = await getDocs(
-    query(collection(db, "compras"), where("cedula", "==", userCed))
+    query(collection(db, "compras"), where("cedula", "==", userCedula))
   );
 
   let gasto = 0;
-  comprasSnap.forEach(d => gasto += d.data().total);
+  comprasSnap.forEach(d => gasto += Number(d.data().total));
 
   coinsUsuario = ingreso - gasto;
   document.getElementById("coins").textContent = coinsUsuario;
-});
+}
 
 /* ================= HISTORIAL ================= */
 
@@ -179,11 +209,11 @@ async function cargarHistorial() {
   ul.innerHTML = "";
 
   const snap = await getDocs(
-    query(collection(db, "compras"), where("cedula", "==", userCed))
+    query(collection(db, "compras"), where("cedula", "==", userCedula))
   );
 
-  snap.forEach(d => {
-    const c = d.data();
-    ul.innerHTML += `<li>${c.total} coins</li>`;
+  snap.forEach(doc => {
+    const c = doc.data();
+    ul.innerHTML += `<li>Compra: ${c.total} coins</li>`;
   });
 }
