@@ -1,7 +1,10 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
-  getFirestore, collection, query, where, getDocs, addDoc, serverTimestamp
+  getFirestore, collection, query, where, getDocs,
+  addDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+/* =================== FIREBASE =================== */
 
 const firebaseConfig = {
   apiKey: "AIzaSyCsz2EP8IsTlG02uU2_GRfyQeeajMDuJjI",
@@ -30,6 +33,7 @@ document.getElementById("ingresarBtn").addEventListener("click", async()=>{
 
   userCed = ced;
 
+  // 🔹 Ingresos reales (NO se modifican nunca)
   const movSnap = await getDocs(query(
     collection(db,"usuariosPorFecha"),
     where("cedula","==",ced)
@@ -42,7 +46,7 @@ document.getElementById("ingresarBtn").addEventListener("click", async()=>{
 
   movSnap.forEach(d=>{
     const x=d.data();
-    totalIngreso += x.coins_ganados;
+    totalIngreso += x.coins_ganados;   // ← historial puro
     if(!fecha || x.fecha>fecha){
       fecha=x.fecha;
       nombre=x.nombre;
@@ -50,6 +54,7 @@ document.getElementById("ingresarBtn").addEventListener("click", async()=>{
     }
   });
 
+  // 🔹 Gastos reales
   const comprasSnap = await getDocs(query(
     collection(db,"compras"),
     where("cedula","==",ced)
@@ -62,7 +67,7 @@ document.getElementById("ingresarBtn").addEventListener("click", async()=>{
 
   document.getElementById("coins").textContent = coinsUsuario;
   document.getElementById("datos").innerHTML = `
-    <li>${nombre}</li>
+    <li><b>${nombre}</b></li>
     <li>${ced}</li>
     <li>${cedis}</li>
     <li>${fecha}</li>
@@ -81,13 +86,22 @@ async function cargarProductos(){
   const snap = await getDocs(collection(db,"productos"));
   snap.forEach(d=>{
     const p=d.data();
+
     const card=document.createElement("div");
-    card.innerHTML=`
-      <img src="assets/productos/${p.producto}.png">
+
+    // Imagen segura (no rompe por 404)
+    const img = document.createElement("img");
+    img.src = `assets/productos/${p.producto}.png`;
+    img.onerror = ()=> img.src = "assets/productos/noimage.png";
+
+    card.appendChild(img);
+
+    card.innerHTML += `
       <h4>${p.producto}</h4>
       <b>${p.coins} coins</b>
       <button>Agregar</button>
     `;
+
     card.querySelector("button").onclick=()=>agregar(p.producto,p.coins);
     div.appendChild(card);
   });
@@ -117,6 +131,7 @@ document.getElementById("btnConfirmar").addEventListener("click", async()=>{
   const total = carrito.reduce((a,b)=>a+b.precio,0);
   if(total>coinsUsuario) return alert("Fondos insuficientes");
 
+  // 🔹 SOLO registramos la compra (NO tocamos usuariosPorFecha)
   await addDoc(collection(db,"compras"),{
     cedula:userCed,
     items:carrito,
@@ -128,7 +143,7 @@ document.getElementById("btnConfirmar").addEventListener("click", async()=>{
   renderCarrito();
   cargarHistorial();
 
-  // recalcular saldo real
+  // 🔹 Recalcular saldo real (ingresos – gastos)
   const movSnap = await getDocs(query(collection(db,"usuariosPorFecha"),where("cedula","==",userCed)));
   let ingreso=0;
   movSnap.forEach(d=>ingreso+=d.data().coins_ganados);
@@ -137,7 +152,7 @@ document.getElementById("btnConfirmar").addEventListener("click", async()=>{
   let gasto=0;
   comprasSnap.forEach(d=>gasto+=d.data().total);
 
-  coinsUsuario = ingreso-gasto;
+  coinsUsuario = ingreso - gasto;
   document.getElementById("coins").textContent = coinsUsuario;
 });
 
