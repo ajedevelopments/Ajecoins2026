@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js  ";
 import {
-  getFirestore, collection, query, where, getDocs, updateDoc, doc, addDoc, serverTimestamp
+  getFirestore, collection, query, where, getDocs, addDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js  ";
 
 const firebaseConfig = {
@@ -20,12 +20,25 @@ let coinsUsuario = 0;
 let carrito = [];
 let userCed = '';
 
-// ---------- ELEMENTAS ----------
+// ---------- ELEMENTOS ----------
 const loginCard   = document.getElementById('login');
-const cuentaCard  = document.getElementById('cuenta');
+const cuentaInput = document.getElementById('IdCedis'); // ajusta si usas otro ID
 const cedulaInput = document.getElementById('cedulaInput');
-const ingresarBtn = document.getElementById('ingresarBtn');
-const cerrarBtn   = document.getElementById('cerrarBtn');
+const btnIngresar = document.getElementById('ingresarBtn');
+const cerrarBtn   = document.getElementById('IdCedis'); // ajusta si usas otro ID
+const btnVerMov    = document.getElementById('btnVerMov');
+const btnExportMov = document.getElementById('btnExportMov');
+const btnExportAll = document.getElementById('btnExportAllMov');
+const movCedula    = document.getElementById('movCedula');
+const movBody      = document.querySelector("#movTable tbody");
+
+// ---------- FUNCIONES AUXILIARES ----------
+function normalizarFecha(fecha) {
+  const [d, m, y] = fecha.split("/");
+  return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+}
+
+// ---------- USUARIOS (ADMIN) ----------
 const usersBody   = document.querySelector("#usersTable tbody");
 const filtroFecha = document.getElementById("filtroFecha");
 const btnFiltrar  = document.getElementById("btnFiltrar");
@@ -53,7 +66,7 @@ async function loadUsers(fecha = null) {
   pintarTablaUsuarios(usuarios);
 }
 
-// ----------- MODAL DETALLE POR FECHA -----------
+// ---------- MODAL DETALLE POR FECHA ----------
 const detalleDialog = document.getElementById('detalleDialog');
 const detCedula     = document.getElementById('detCedula');
 const detalleBody   = document.querySelector('#detalleTable tbody');
@@ -64,7 +77,6 @@ async function mostrarDebeHaber(cedula) {
   detalleBody.innerHTML = '<tr><td colspan="4">Cargando...</td></tr>';
   detalleDialog.showModal();
 
-  // 1. Solo valores del archivo (sin restar)
   const qUser = query(collection(db, 'usuariosPorFecha'), where('cedula', '==', cedula));
   const userSnap = await getDocs(qUser);
   const registros = [];
@@ -84,14 +96,13 @@ async function mostrarDebeHaber(cedula) {
   detalleBody.innerHTML = html;
 }
 
-// ----------- MOVIMIENTOS POR USUARIO (EVOLUTIVO) -----------
+// ---------- MOVIMIENTOS POR USUARIO (EVOLUTIVO) ----------
 const movBody      = document.querySelector("#movTable tbody");
 const btnVerMov    = document.getElementById("btnVerMov");
 const btnExportMov = document.getElementById("btnExportMov");
 const btnExportAll = document.getElementById("btnExportAllMov");
 const movCedula    = document.getElementById("movCedula");
 
-// Si los botones no existen, los creamos dinámicamente
 if (!btnVerMov) {
   const section = document.querySelector("section:last-of-type");
   section.insertAdjacentHTML('afterend', `
@@ -101,10 +112,9 @@ if (!btnVerMov) {
       <button id="btnVerMov">Ver movimientos</button>
       <button id="btnExportMov" class="btn btn-secondary">Exportar esta cédula</button>
       <button id="btnExportAllMov" class="btn btn-secondary">Exportar TODOS</button>
-      <table id="movTable"><thead><tr><th>Cédula</th><th>Fecha</th><th>Concepto</th><th>Coins</th><th>Saldo</th></tr></thead><tbody></tbody></table>
+      <table id="movTable"><thead><tr><th>Cedula</th><th>Fecha</th><th>Concepto</th><th>Coins</th><th>Saldo</th></tr></thead><tbody></tbody></table>
     </section>
   `);
-  // Reasignar variables tras crear dinámicamente
   window.movBody      = document.querySelector("#movTable tbody");
   window.btnVerMov    = document.getElementById("btnVerMov");
   window.btnExportMov = document.getElementById("btnExportMov");
@@ -183,11 +193,8 @@ function exportarMovCSV() {
   link.click();
 }
 
-// ---------- EVENTOS (SIN TOCAR NADA DE ARRIBA) ----------
 btnVerMov.addEventListener("click", () => cargarMovimientos(movCedula.value.trim()));
 btnExportMov.addEventListener("click", exportarMovCSV);
-
-uploadProductBtn.addEventListener("click", loadProducts);
 
 // ---------- INICIAL ----------
 loadProducts();
