@@ -197,14 +197,11 @@ btnExport.onclick = ()=>{
 
 const movCedula = document.getElementById("movCedula");
 const btnVerMov = document.getElementById("btnVerMov");
-const btnExportMov = document.getElementById("btnExportMov");
-const btnExportAllMov = document.getElementById("btnExportAllMov");
 const movBody = document.querySelector("#movTable tbody");
 
 btnVerMov.onclick = async ()=>{
   const ced = movCedula.value.trim();
   if(!ced) return alert("Ingresa una cédula");
-
   const movimientos = await obtenerMovimientos(ced);
   renderMov(movimientos);
 };
@@ -216,30 +213,46 @@ async function obtenerMovimientos(ced){
   const ingresos = await getDocs(query(collection(db,"usuariosPorFecha"), where("cedula","==",ced)));
   ingresos.forEach(d=>{
     const u=d.data();
-    mov.push({cedula:ced,fecha:u.fecha,concepto:"Carga",coins:u.coins_ganados});
+    mov.push({
+      cedula:u.cedula,
+      nombre:u.nombre,
+      cedis:u.cedis,
+      fecha:u.fecha,
+      concepto:"Carga",
+      coins:u.coins_ganados
+    });
   });
 
   const compras = await getDocs(query(collection(db,"compras"), where("cedula","==",ced)));
   compras.forEach(d=>{
     const c=d.data();
-    mov.push({cedula:ced,fecha:c.fecha.toDate().toISOString().slice(0,10),concepto:c.items.map(i=>i.nombre).join(","),coins:-c.total});
+    mov.push({
+      cedula:c.cedula,
+      nombre:c.nombre,
+      cedis:c.cedis,
+      fecha:c.fecha.toDate().toISOString().slice(0,10),
+      concepto:c.items.map(i=>i.nombre).join(", "),
+      coins:-c.total
+    });
   });
 
   mov.sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
-  mov.forEach(m=>{saldo+=m.coins; m.saldo=saldo});
+  mov.forEach(m=>{saldo+=m.coins; m.saldo=saldo;});
   return mov;
 }
 
 function renderMov(lista){
   movBody.innerHTML="";
   if(!lista.length){
-    movBody.innerHTML="<tr><td colspan='5'>Sin movimientos</td></tr>";
+    movBody.innerHTML="<tr><td colspan='7'>Sin movimientos</td></tr>";
     return;
   }
   lista.forEach(m=>{
     movBody.innerHTML+=`
       <tr>
         <td>${m.cedula}</td>
+        <td>${m.nombre}</td>
+        <td>${m.cedis}</td>
         <td>${m.fecha}</td>
         <td>${m.concepto}</td>
         <td style="color:${m.coins>=0?'green':'red'}">${m.coins}</td>
@@ -249,6 +262,7 @@ function renderMov(lista){
 }
 
 /* =================== INIT =================== */
+
 loadUsers();
 loadProducts();
 loadCompras();
