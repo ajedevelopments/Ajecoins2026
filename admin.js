@@ -197,50 +197,94 @@ btnExport.onclick = ()=>{
 
 const movCedula = document.getElementById("movCedula");
 const btnVerMov = document.getElementById("btnVerMov");
+const btnVerTodosMov = document.getElementById("btnVerTodosMov");
+const btnExportMov = document.getElementById("btnExportMov");
 const movBody = document.querySelector("#movTable tbody");
 
+let cacheMovimientos = [];
+
+/* ---- VER POR CEDULA ---- */
 btnVerMov.onclick = async ()=>{
   const ced = movCedula.value.trim();
   if(!ced) return alert("Ingresa una cédula");
-  const movimientos = await obtenerMovimientos(ced);
+
+  const movimientos = await obtenerMovimientosPorCedula(ced);
+  cacheMovimientos = movimientos;
   renderMov(movimientos);
 };
 
-async function obtenerMovimientos(ced){
+/* ---- VER TODOS ---- */
+btnVerTodosMov.onclick = async ()=>{
+  const movimientos = await obtenerTodosMovimientos();
+  cacheMovimientos = movimientos;
+  renderMov(movimientos);
+};
+
+/* ---- EXPORTAR ---- */
+btnExportMov.onclick = ()=>{
+  if(!cacheMovimientos.length){
+    alert("No hay movimientos para exportar");
+    return;
+  }
+
+  const filas=[["Cedula","Nombre","Cedis","Fecha","Concepto","Coins","Saldo"]];
+  cacheMovimientos.forEach(m=>{
+    filas.push([m.cedula,m.nombre,m.cedis,m.fecha,m.concepto,m.coins,m.saldo]);
+  });
+
+  descargarCSV("movimientos.csv",filas);
+};
+
+/* ---- OBTENER POR CEDULA ---- */
+async function obtenerMovimientosPorCedula(ced){
   let mov=[];
   let saldo=0;
 
   const ingresos = await getDocs(query(collection(db,"usuariosPorFecha"), where("cedula","==",ced)));
   ingresos.forEach(d=>{
     const u=d.data();
-    mov.push({
-      cedula:u.cedula,
-      nombre:u.nombre,
-      cedis:u.cedis,
-      fecha:u.fecha,
-      concepto:"Carga",
-      coins:u.coins_ganados
-    });
+    mov.push({cedula:u.cedula,nombre:u.nombre,cedis:u.cedis,fecha:u.fecha,concepto:"Carga",coins:u.coins_ganados});
   });
 
   const compras = await getDocs(query(collection(db,"compras"), where("cedula","==",ced)));
   compras.forEach(d=>{
     const c=d.data();
-    mov.push({
-      cedula:c.cedula,
-      nombre:c.nombre,
-      cedis:c.cedis,
-      fecha:c.fecha.toDate().toISOString().slice(0,10),
-      concepto:c.items.map(i=>i.nombre).join(", "),
-      coins:-c.total
-    });
+    mov.push({cedula:c.cedula,nombre:c.nombre,cedis:c.cedis,fecha:c.fecha.toDate().toISOString().slice(0,10),concepto:c.items.map(i=>i.nombre).join(", "),coins:-c.total});
   });
 
   mov.sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
-  mov.forEach(m=>{saldo+=m.coins; m.saldo=saldo;});
+  mov.forEach(m=>{saldo+=m.coins; m.saldo=saldo});
   return mov;
 }
 
+/* ---- OBTENER TODOS ---- */
+async function obtenerTodosMovimientos(){
+  let mov=[];
+  let saldoPorUsuario={};
+
+  const ingresos = await getDocs(collection(db,"usuariosPorFecha"));
+  ingresos.forEach(d=>{
+    const u=d.data();
+    if(!saldoPorUsuario[u.cedula]) saldoPorUsuario[u.cedula]=0;
+    saldoPorUsuario[u.cedula]+=u.coins_ganados;
+
+    mov.push({cedula:u.cedula,nombre:u.nombre,cedis:u.cedis,fecha:u.fecha,concepto:"Carga",coins:u.coins_ganados,saldo:saldoPorUsuario[u.cedula]});
+  });
+
+  const compras = await getDocs(collection(db,"compras"));
+  compras.forEach(d=>{
+    const c=d.data();
+    if(!saldoPorUsuario[c.cedula]) saldoPorUsuario[c.cedula]=0;
+    saldoPorUsuario[c.cedula]-=c.total;
+
+    mov.push({cedula:c.cedula,nombre:c.nombre,cedis:c.cedis,fecha:c.fecha.toDate().toISOString().slice(0,10),concepto:c.items.map(i=>i.nombre).join(", "),coins:-c.total,saldo:saldoPorUsuario[c.cedula]});
+  });
+
+  mov.sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
+  return mov;
+}
+
+/* ---- RENDER ---- */
 function renderMov(lista){
   movBody.innerHTML="";
   if(!lista.length){
