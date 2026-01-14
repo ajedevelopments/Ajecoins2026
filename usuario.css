@@ -63,6 +63,16 @@ button.sec:hover {
   transform:translateY(-2px);
 }
 
+/* ================= INPUTS ================= */
+input {
+  width:100%;
+  padding:12px;
+  margin-bottom:10px;
+  border-radius:8px;
+  border:1px solid #ddd;
+  font-size:14px;
+}
+
 /* ================= TIENDA ================= */
 .tienda {
   display:grid;
@@ -178,4 +188,23 @@ ul { list-style:none; padding:0; margin:0 0 12px 0; }
 @keyframes spin {
   from { transform:rotate(0deg); }
   to { transform:rotate(360deg); }
+}
+
+/* ================= PASSWORD PANEL ================= */
+.passwordBox {
+  background:#f1f5f9;
+  padding:12px;
+  border-radius:10px;
+  margin:15px 0;
+  border:1px solid #ddd;
+}
+
+.passwordBox h4 {
+  margin:0 0 10px 0;
+  color:#007a5a;
+  font-size:14px;
+}
+
+.passwordBox button {
+  margin-top:6px;
 }
