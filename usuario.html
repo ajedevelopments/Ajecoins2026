@@ -23,13 +23,17 @@
   <span>AJE Coins</span>
 </header>
 
+<!-- LOGIN -->
 <section id="login" class="card">
   <h2>Ingresa</h2>
   <input id="cedulaInput" type="text" placeholder="Cédula" maxlength="10"/>
+  <input id="passwordInput" type="password" placeholder="Contraseña"/>
+  <small class="hint">La contraseña inicial es tu cédula</small>
   <button id="ingresarBtn">Entrar</button>
   <p id="errorMsg" class="error"></p>
 </section>
 
+<!-- CUENTA -->
 <section id="cuenta" class="card hidden">
 
   <div class="saldoHead">
@@ -38,6 +42,8 @@
   </div>
 
   <ul id="datos" class="datos"></ul>
+
+  <button id="btnCambiarPass" class="btnSec">Cambiar contraseña</button>
 
   <h3>Tienda</h3>
   <div id="productosTienda" class="tienda"></div>
