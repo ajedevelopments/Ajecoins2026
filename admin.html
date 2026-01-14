@@ -93,27 +93,6 @@
   </table>
 </section>
 
-<!-- ================== MODAL DETALLE ================== -->
-<div id="detalleModal" class="modal hidden">
-  <div class="modal-content">
-    <h3>Detalle por fecha – <span id="detCedula"></span></h3>
-
-    <table id="detalleTable">
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Coins ganados</th>
-          <th>Coins canjeados</th>
-          <th>Saldo restante</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-
-    <button id="cerrarDetalle">Cerrar</button>
-  </div>
-</div>
-
 <!-- ================== MOVIMIENTOS ================== -->
 <section class="card">
   <h2>Movimientos por usuario</h2>
@@ -121,14 +100,15 @@
   <div class="filtros">
     <input type="text" id="movCedula" placeholder="Ingrese cédula"/>
     <button id="btnVerMov">Ver movimientos</button>
-    <button id="btnExportMov">Exportar esta cédula</button>
-    <button id="btnExportAllMov">Exportar TODOS</button>
+    <button id="btnExportMov">Exportar</button>
   </div>
 
   <table id="movTable">
     <thead>
       <tr>
         <th>Cédula</th>
+        <th>Nombre</th>
+        <th>Cedis</th>
         <th>Fecha</th>
         <th>Concepto</th>
         <th>Coins</th>
