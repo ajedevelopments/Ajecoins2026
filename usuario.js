@@ -15,8 +15,10 @@ const db = firebase.firestore();
 const loginCard = document.getElementById('login');
 const cuentaCard = document.getElementById('cuenta');
 const cedulaInput = document.getElementById('cedulaInput');
+const passwordInput = document.getElementById('passwordInput');
 const ingresarBtn = document.getElementById('ingresarBtn');
 const cerrarBtn = document.getElementById('cerrarBtn');
+const btnCambiarPass = document.getElementById('btnCambiarPass');
 const datosUl = document.getElementById('datos');
 const coinsP = document.getElementById('coins');
 const errorMsg = document.getElementById('errorMsg');
@@ -38,6 +40,7 @@ ingresarBtn.addEventListener('click', buscarUsuario);
 cerrarBtn.addEventListener('click', () => location.reload());
 document.getElementById('btnConfirmar').addEventListener('click', confirmarCompra);
 document.getElementById('btnCancelar').addEventListener('click', cerrarModal);
+btnCambiarPass.addEventListener("click", cambiarPassword);
 
 /* ================= LOADER ================= */
 function mostrarLoader(mensaje='Procesando…'){
@@ -48,21 +51,49 @@ function ocultarLoader(){
   loader.classList.remove('active');
 }
 
+/* ================= CREDENCIALES ================= */
+
+async function crearCredencialSiNoExiste(ced){
+  const ref = db.collection("credenciales").doc(ced);
+  const doc = await ref.get();
+  if(!doc.exists){
+    await ref.set({
+      password: ced,
+      creado: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }
+}
+
+async function obtenerCredencial(ced){
+  const doc = await db.collection("credenciales").doc(ced).get();
+  return doc.exists ? doc.data() : null;
+}
+
 /* ================= LOGIN ================= */
 async function buscarUsuario(){
   const ced = cedulaInput.value.trim();
-  if(!ced){
-    errorMsg.textContent='Escribe tu cédula';
+  const pass = passwordInput.value.trim();
+
+  if(!ced || !pass){
+    errorMsg.textContent='Cédula y contraseña obligatorias';
     return;
   }
 
-  mostrarLoader('Cargando datos del usuario…');
+  mostrarLoader('Verificando credenciales…');
 
   try{
     const snap = await db.collection('usuariosPorFecha').where('cedula','==',ced).get();
-
     if(snap.empty){
       errorMsg.textContent='Cédula no encontrada';
+      ocultarLoader();
+      return;
+    }
+
+    await crearCredencialSiNoExiste(ced);
+    const cred = await obtenerCredencial(ced);
+
+    if(cred.password !== pass){
+      errorMsg.textContent='Contraseña incorrecta';
       ocultarLoader();
       return;
     }
@@ -100,6 +131,21 @@ async function buscarUsuario(){
   }finally{
     ocultarLoader();
   }
+}
+
+/* ================= CAMBIAR PASSWORD ================= */
+async function cambiarPassword(){
+  const nueva = prompt("Ingrese nueva contraseña:");
+  if(!nueva || nueva.length < 4){
+    alert("Mínimo 4 caracteres");
+    return;
+  }
+
+  await db.collection("credenciales").doc(userCed).update({
+    password: nueva
+  });
+
+  alert("Contraseña actualizada");
 }
 
 /* ================= UI ================= */
