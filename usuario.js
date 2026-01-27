@@ -27,8 +27,6 @@ const carritoList = document.getElementById('carritoList');
 const bolsaSpan = document.getElementById('bolsa');
 const historialList = document.getElementById('historialList');
 const loader = document.getElementById('loader');
-
-// Nuevos Elementos
 const modalCorreo = document.getElementById('modalCorreo');
 const modalRecuperar = document.getElementById('modalRecuperar');
 
@@ -74,7 +72,8 @@ async function crearCredencialSiNoExiste(cod){
     await ref.set({
       password: cod, 
       creado: firebase.firestore.FieldValue.serverTimestamp(),
-      email: "" 
+      email: "",
+      requiereCambio: true // Bloqueo inicial
     });
   }
 }
@@ -84,7 +83,7 @@ async function obtenerCredencial(cod){
   return doc.exists ? doc.data() : null;
 }
 
-/* ================= LOGIN ================= */
+/* ================= LOGIN Y SEGURIDAD ================= */
 async function buscarUsuario(){
   const cod = cedulaInput.value.trim();
   const pass = passwordInput.value.trim();
@@ -115,16 +114,34 @@ async function buscarUsuario(){
     }
 
     userCod = cod;
-    
-    // VERIFICACIÓN DE CORREO OBLIGATORIO
+
+    // 1. CAMBIO DE CONTRASEÑA OBLIGATORIO
+    if (cred.requiereCambio === true) {
+        ocultarLoader();
+        const nueva = prompt("🔒 SEGURIDAD: Debes cambiar tu contraseña inicial por una personal:");
+        if(!nueva || nueva.length < 4) {
+            alert("Acceso denegado. Debes definir una contraseña segura.");
+            return;
+        }
+        mostrarLoader('Actualizando...');
+        await db.collection("credenciales").doc(userCod).update({ 
+            password: nueva,
+            requiereCambio: false 
+        });
+        alert("¡Éxito! Ingresa ahora con tu nueva contraseña.");
+        location.reload(); 
+        return;
+    }
+
+    // 2. REGISTRO DE CORREO
     if (!cred.email) {
         ocultarLoader();
         modalCorreo.classList.remove('hidden');
         return; 
     }
 
+    // 3. CARGA DE DATOS SI TODO ESTÁ OK
     let totalCoins=0, fechaMasReciente='', nombre='', cedis='';
-
     snap.forEach(doc=>{
       const d=doc.data();
       totalCoins += Number(d.coins_ganados);
@@ -157,39 +174,25 @@ async function buscarUsuario(){
   }
 }
 
+/* ================= FUNCIONES DE APOYO ================= */
 async function guardarEmail() {
     const email = document.getElementById('emailRegistroInput').value.trim();
-    if (!email.includes("@") || email.length < 5) return alert("Ingresa un correo válido");
-
-    mostrarLoader('Registrando correo...');
-    try {
-        await db.collection("credenciales").doc(userCod).update({ email: email });
-        alert("Correo registrado con éxito. Por favor, ingresa de nuevo.");
-        location.reload();
-    } catch (e) {
-        alert("Error al guardar correo");
-    } finally {
-        ocultarLoader();
-    }
+    if (!email.includes("@")) return alert("Ingresa un correo válido");
+    mostrarLoader('Guardando...');
+    await db.collection("credenciales").doc(userCod).update({ email: email });
+    location.reload();
 }
 
-/* ================= RECUPERACIÓN (EMAILJS) ================= */
 async function flujoEnviarCodigo() {
     const cod = document.getElementById('codRecuperar').value.trim();
     const email = document.getElementById('emailRecuperar').value.trim();
-
-    if(!cod || !email) return alert("Completa los datos");
-
-    mostrarLoader('Verificando...');
     const cred = await obtenerCredencial(cod);
 
-    if (!cred || cred.email !== email) {
-        ocultarLoader();
-        return alert("Los datos no coinciden.");
-    }
+    if (!cred || cred.email !== email) return alert("Datos incorrectos");
 
     codigoGenerado = Math.floor(100000 + Math.random() * 900000).toString();
-
+    
+    // Parámetros exactos de tu plantilla de EmailJS
     const templateParams = {
         user_name: cod,
         user_email: email,
@@ -198,15 +201,10 @@ async function flujoEnviarCodigo() {
 
     try {
         await emailjs.send('service_5zouh3m', 'template_j20stir', templateParams);
-        alert("Código enviado a tu bandeja.");
+        alert("Código enviado.");
         document.getElementById('step1Recuperar').classList.add('hidden');
         document.getElementById('step2Recuperar').classList.remove('hidden');
-        document.getElementById('tituloRecuperar').textContent = "Paso Final";
-    } catch (err) {
-        alert("Error al enviar email");
-    } finally {
-        ocultarLoader();
-    }
+    } catch (e) { alert("Error al enviar email"); }
 }
 
 async function restablecerPassword() {
@@ -214,25 +212,16 @@ async function restablecerPassword() {
     const pass = document.getElementById('nuevaPassInput').value.trim();
     const user = document.getElementById('codRecuperar').value.trim();
 
-    if (codIn !== codigoGenerado) return alert("Código inválido");
-    if (pass.length < 4) return alert("Contraseña muy corta");
-
-    mostrarLoader('Actualizando...');
-    await db.collection("credenciales").doc(user).update({ password: pass });
-    alert("¡Listo! Ya puedes entrar.");
+    if (codIn !== codigoGenerado) return alert("Código incorrecto");
+    await db.collection("credenciales").doc(user).update({ password: pass, requiereCambio: false });
+    alert("Contraseña restablecida.");
     location.reload();
 }
 
-/* ================= TIENDA Y CARRITO ================= */
 function mostrarDatos(u){
   loginCard.classList.add('hidden');
   cuentaCard.classList.remove('hidden');
-  datosUl.innerHTML=`
-    <li><strong>Fecha:</strong> ${u.fecha}</li>
-    <li><strong>Código:</strong> ${u.codigo}</li>
-    <li><strong>Nombre:</strong> ${u.nombre}</li>
-    <li><strong>Cedis:</strong> ${u.cedis}</li>
-  `;
+  datosUl.innerHTML=`<li><strong>Fecha:</strong> ${u.fecha}</li><li><strong>Código:</strong> ${u.codigo}</li><li><strong>Nombre:</strong> ${u.nombre}</li><li><strong>Cedis:</strong> ${u.cedis}</li>`;
 }
 
 async function cargarProductos(){
@@ -257,10 +246,7 @@ function agregarAlCarrito(nombre, precio){
 function renderCarrito(){
   carritoList.innerHTML='';
   let total=0;
-  carrito.forEach(i=>{
-    total+=i.precio;
-    carritoList.innerHTML += `<li>${i.nombre} <span>${i.precio} c</span></li>`;
-  });
+  carrito.forEach(i=>{ total+=i.precio; carritoList.innerHTML += `<li>${i.nombre} <span>${i.precio} c</span></li>`; });
   bolsaSpan.textContent=`${total} c`;
   let btnFin = document.getElementById('btnFin');
   if(carrito.length && !btnFin){
@@ -273,7 +259,7 @@ function renderCarrito(){
 
 function abrirModal(){
   const total = carrito.reduce((a,b)=>a+b.precio,0);
-  document.getElementById('totalFin').textContent=`Total: ${total} coins`;
+  document.getElementById('totalFin').textContent=`Total: ${total} c`;
   document.getElementById('resumenList').innerHTML = carrito.map(i=>`<li>${i.nombre} · ${i.precio}</li>`).join('');
   document.getElementById('modalFin').classList.remove('hidden');
 }
@@ -283,37 +269,27 @@ function cerrarModal(){ document.getElementById('modalFin').classList.add('hidde
 async function confirmarCompra(){
   const total = carrito.reduce((a,b)=>a+b.precio,0);
   cerrarModal();
-  mostrarLoader('Procesando compra…');
+  mostrarLoader('Procesando...');
   try{
-    await db.collection('compras').add({
-      codVendedor: userCod,
-      nombre: userNombre,
-      cedis: userCedis,
-      items: carrito,
-      total: total,
-      fecha: firebase.firestore.FieldValue.serverTimestamp()
-    });
+    await db.collection('compras').add({ codVendedor: userCod, nombre: userNombre, cedis: userCedis, items: carrito, total: total, fecha: firebase.firestore.FieldValue.serverTimestamp() });
     coinsUsuario -= total;
     coinsP.textContent = coinsUsuario;
     carrito = [];
     renderCarrito();
     await cargarHistorial();
-  }catch(err){ alert('Error en la compra'); }finally{ ocultarLoader(); }
+  }catch(err){ alert('Error'); }finally{ ocultarLoader(); }
 }
 
 async function cargarHistorial(){
   historialList.innerHTML='';
   const snap = await db.collection('compras').where('codVendedor','==',userCod).get();
   if(snap.empty){ historialList.innerHTML='<li>Sin compras</li>'; return; }
-  snap.forEach(doc=>{
-    const c=doc.data();
-    historialList.innerHTML += `<li>${c.items.map(i=>i.nombre).join(", ")} — ${c.total} c</li>`;
-  });
+  snap.forEach(doc=>{ const c=doc.data(); historialList.innerHTML += `<li>${c.items.map(i=>i.nombre).join(", ")} — ${c.total} c</li>`; });
 }
 
 async function cambiarPassword(){
   const nueva = prompt("Nueva contraseña:");
-  if(!nueva || nueva.length < 4){ alert("Mínimo 4 caracteres"); return; }
+  if(!nueva || nueva.length < 4) return;
   await db.collection("credenciales").doc(userCod).update({ password: nueva });
-  alert("Actualizada");
+  alert("Cambiado.");
 }
