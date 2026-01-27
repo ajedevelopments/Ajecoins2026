@@ -45,7 +45,6 @@ document.getElementById('btnConfirmar').addEventListener('click', confirmarCompr
 document.getElementById('btnCancelar').addEventListener('click', cerrarModal);
 btnCambiarPass.addEventListener("click", cambiarPassword);
 
-// Eventos de Recuperación y Correo
 document.getElementById('btnGuardarEmail').addEventListener('click', guardarEmail);
 document.getElementById('olvideLink').addEventListener('click', (e) => {
     e.preventDefault();
@@ -73,7 +72,7 @@ async function crearCredencialSiNoExiste(cod){
       password: cod, 
       creado: firebase.firestore.FieldValue.serverTimestamp(),
       email: "",
-      requiereCambio: true // Bloqueo inicial
+      requiereCambio: true 
     });
   }
 }
@@ -115,12 +114,12 @@ async function buscarUsuario(){
 
     userCod = cod;
 
-    // 1. CAMBIO DE CONTRASEÑA OBLIGATORIO
+    // 1. CAMBIO OBLIGATORIO DE CONTRASEÑA
     if (cred.requiereCambio === true) {
         ocultarLoader();
         const nueva = prompt("🔒 SEGURIDAD: Debes cambiar tu contraseña inicial por una personal:");
         if(!nueva || nueva.length < 4) {
-            alert("Acceso denegado. Debes definir una contraseña segura.");
+            alert("Acceso denegado. Debes definir una contraseña de al menos 4 caracteres.");
             return;
         }
         mostrarLoader('Actualizando...');
@@ -128,7 +127,7 @@ async function buscarUsuario(){
             password: nueva,
             requiereCambio: false 
         });
-        alert("¡Éxito! Ingresa ahora con tu nueva contraseña.");
+        alert("Contraseña actualizada. Por favor, ingresa de nuevo.");
         location.reload(); 
         return;
     }
@@ -140,7 +139,7 @@ async function buscarUsuario(){
         return; 
     }
 
-    // 3. CARGA DE DATOS SI TODO ESTÁ OK
+    // 3. CARGA DE DATOS
     let totalCoins=0, fechaMasReciente='', nombre='', cedis='';
     snap.forEach(doc=>{
       const d=doc.data();
@@ -174,7 +173,7 @@ async function buscarUsuario(){
   }
 }
 
-/* ================= FUNCIONES DE APOYO ================= */
+/* ================= RECUPERACIÓN ================= */
 async function guardarEmail() {
     const email = document.getElementById('emailRegistroInput').value.trim();
     if (!email.includes("@")) return alert("Ingresa un correo válido");
@@ -186,13 +185,17 @@ async function guardarEmail() {
 async function flujoEnviarCodigo() {
     const cod = document.getElementById('codRecuperar').value.trim();
     const email = document.getElementById('emailRecuperar').value.trim();
+    
+    mostrarLoader('Enviando código...');
     const cred = await obtenerCredencial(cod);
 
-    if (!cred || cred.email !== email) return alert("Datos incorrectos");
+    if (!cred || cred.email !== email) {
+        ocultarLoader();
+        return alert("Los datos no coinciden.");
+    }
 
     codigoGenerado = Math.floor(100000 + Math.random() * 900000).toString();
     
-    // Parámetros exactos de tu plantilla de EmailJS
     const templateParams = {
         user_name: cod,
         user_email: email,
@@ -200,11 +203,16 @@ async function flujoEnviarCodigo() {
     };
 
     try {
-        await emailjs.send('service_5zouh3m', 'template_j20stir', templateParams);
-        alert("Código enviado.");
+        // IDs ACTUALIZADOS
+        await emailjs.send('service_5zouh3m', 'template_fwvkczd', templateParams);
+        alert("Código enviado con éxito.");
         document.getElementById('step1Recuperar').classList.add('hidden');
         document.getElementById('step2Recuperar').classList.remove('hidden');
-    } catch (e) { alert("Error al enviar email"); }
+    } catch (e) { 
+        alert("Error al enviar email. Intenta de nuevo."); 
+    } finally {
+        ocultarLoader();
+    }
 }
 
 async function restablecerPassword() {
@@ -213,11 +221,15 @@ async function restablecerPassword() {
     const user = document.getElementById('codRecuperar').value.trim();
 
     if (codIn !== codigoGenerado) return alert("Código incorrecto");
+    if (pass.length < 4) return alert("Contraseña muy corta");
+
+    mostrarLoader('Restableciendo...');
     await db.collection("credenciales").doc(user).update({ password: pass, requiereCambio: false });
-    alert("Contraseña restablecida.");
+    alert("Contraseña restablecida correctamente.");
     location.reload();
 }
 
+/* ================= FUNCIONES UI ================= */
 function mostrarDatos(u){
   loginCard.classList.add('hidden');
   cuentaCard.classList.remove('hidden');
