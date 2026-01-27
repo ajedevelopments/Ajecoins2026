@@ -4,10 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Admin – AJE Coins</title>
-
 <link rel="stylesheet" href="styles.css"/>
-
-<!-- MUY IMPORTANTE -->
 <script type="module" src="admin.js"></script>
 </head>
 
@@ -15,21 +12,22 @@
 
 <h1>Panel de Administrador – AJE Coins</h1>
 
-<!-- ================== CARGA USUARIOS ================== -->
 <section class="card">
   <h2>Subir archivo de USUARIOS</h2>
-  <input type="file" id="fileInput" accept=".csv"/>
-  <button id="uploadBtn">Cargar usuarios</button>
+  <div class="filtros">
+    <input type="file" id="fileInput" accept=".csv"/>
+    <button id="uploadBtn">Cargar usuarios</button>
+  </div>
 </section>
 
-<!-- ================== CARGA PRODUCTOS ================== -->
 <section class="card">
   <h2>Subir archivo de PRODUCTOS</h2>
-  <input type="file" id="productFileInput" accept=".csv"/>
-  <button id="uploadProductBtn">Cargar productos</button>
+  <div class="filtros">
+    <input type="file" id="productFileInput" accept=".csv"/>
+    <button id="uploadProductBtn">Cargar productos</button>
+  </div>
 </section>
 
-<!-- ================== PRODUCTOS ================== -->
 <section class="card">
   <h2>Productos</h2>
   <table id="productsTable">
@@ -44,45 +42,36 @@
   </table>
 </section>
 
-<!-- ================== USUARIOS ================== -->
 <section class="card">
-  <h2>Usuarios cargados</h2>
-
+  <h2>Usuarios cargados (Cargas de Coins)</h2>
   <div class="filtros">
-    <label>Fecha:
-      <input type="date" id="filtroFecha"/>
-    </label>
+    <label>Fecha: <input type="date" id="filtroFecha"/></label>
     <button id="btnFiltrar">Filtrar</button>
     <button id="btnVerTodo">Ver todo</button>
     <button id="btnExportUsers">Exportar CSV</button>
   </div>
-
   <table id="usersTable">
     <thead>
       <tr>
         <th>Fecha</th>
-        <th>Cédula</th>
+        <th>Código Vendedor</th>
         <th>Nombre</th>
         <th>Cedis</th>
-        <th>Coins ganados</th>
+        <th>Coins</th>
+        <th>Acciones</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
 </section>
 
-<!-- ================== COMPRAS ================== -->
 <section class="card">
-  <h2>
-    Historial de compras
-    <button id="btnExport">Exportar CSV</button>
-  </h2>
-
+  <h2>Historial de compras <button id="btnExport">Exportar CSV</button></h2>
   <table id="comprasTable">
     <thead>
       <tr>
         <th>Fecha</th>
-        <th>Cédula</th>
+        <th>Código Vendedor</th>
         <th>Nombre</th>
         <th>Cedis</th>
         <th>Productos</th>
@@ -93,23 +82,18 @@
   </table>
 </section>
 
-<!-- ================== MOVIMIENTOS ================== -->
 <section class="card">
   <h2>Movimientos por usuario</h2>
-
   <div class="filtros">
-    <input type="text" id="movCedula" placeholder="Ingrese cédula"/>
-
-    <!-- Estos 3 botones son EXACTAMENTE los que el admin.js usa -->
-    <button id="btnVerMov">Ver por cédula</button>
+    <input type="text" id="movCedula" placeholder="Código de Vendedor"/>
+    <button id="btnVerMov">Ver por código</button>
     <button id="btnVerTodosMov">Ver TODOS</button>
     <button id="btnExportMov">Exportar</button>
   </div>
-
   <table id="movTable">
     <thead>
       <tr>
-        <th>Cédula</th>
+        <th>Código Vendedor</th>
         <th>Nombre</th>
         <th>Cedis</th>
         <th>Fecha</th>
