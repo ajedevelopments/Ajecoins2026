@@ -16,7 +16,7 @@ const loginCard = document.getElementById('login');
 const cuentaCard = document.getElementById('cuenta');
 const cedulaInput = document.getElementById('cedulaInput'); 
 const passwordInput = document.getElementById('passwordInput');
-const cedisInput = document.getElementById('cedisInput'); // NUEVO: Selector de CEDIS
+const cedisInput = document.getElementById('cedisInput'); // Selector dinámico
 const ingresarBtn = document.getElementById('ingresarBtn');
 const cerrarBtn = document.getElementById('cerrarBtn');
 const btnCambiarPass = document.getElementById('btnCambiarPass');
@@ -30,6 +30,7 @@ const movimientosBody = document.getElementById('movimientosBody');
 const loader = document.getElementById('loader');
 const modalCorreo = document.getElementById('modalCorreo');
 const modalRecuperar = document.getElementById('modalRecuperar');
+const cedisRecuperar = document.getElementById('cedisRecuperar'); // Selector dinámico en modal
 
 /* ================= VARIABLES GLOBALES ================= */
 let coinsUsuario = 0;
@@ -37,8 +38,43 @@ let carrito = [];
 let userCod = ''; 
 let userNombre = '';
 let userCedis = '';
-let userLoginId = ''; // Identificador único (cod_cedis)
+let userLoginId = ''; // Formato: cod_cedis
 let codigoGenerado = "";
+
+/* ================= INICIO / CARGA DE CEDIS ================= */
+// Esta función lee la colección de usuarios y extrae los CEDIS únicos
+async function cargarCedisDinamicos() {
+    try {
+        const snap = await db.collection('usuariosPorFecha').get();
+        const listaCedis = new Set();
+
+        snap.forEach(doc => {
+            const d = doc.data();
+            if (d.cedis) {
+                listaCedis.add(d.cedis.toUpperCase().trim());
+            }
+        });
+
+        const cedisOrdenados = Array.from(listaCedis).sort();
+        const selects = [cedisInput, cedisRecuperar];
+        
+        selects.forEach(sel => {
+            if (!sel) return;
+            sel.innerHTML = '<option value="">Selecciona tu CEDIS</option>';
+            cedisOrdenados.forEach(nombre => {
+                const opt = document.createElement('option');
+                opt.value = nombre;
+                opt.textContent = nombre;
+                sel.appendChild(opt);
+            });
+        });
+    } catch (err) {
+        console.error("Error cargando CEDIS:", err);
+    }
+}
+
+// Ejecutar carga de sedes al abrir la página
+cargarCedisDinamicos();
 
 /* ================= EVENTOS ================= */
 ingresarBtn.addEventListener('click', buscarUsuario);
@@ -66,7 +102,6 @@ function ocultarLoader(){
 }
 
 /* ================= CREDENCIALES ================= */
-// Ahora usamos un ID que combina código y cedis para evitar duplicados entre sedes
 async function crearCredencialSiNoExiste(loginId, codOriginal){
   const ref = db.collection("credenciales").doc(loginId);
   const doc = await ref.get();
@@ -89,7 +124,7 @@ async function obtenerCredencial(loginId){
 async function buscarUsuario(){
   const cod = cedulaInput.value.trim();
   const pass = passwordInput.value.trim();
-  const cedisSel = cedisInput.value; // Obtener CEDIS seleccionado
+  const cedisSel = cedisInput.value;
 
   if(!cod || !pass || !cedisSel){
     errorMsg.textContent='Código, contraseña y CEDIS obligatorios';
@@ -99,7 +134,7 @@ async function buscarUsuario(){
   mostrarLoader('Verificando credenciales…');
 
   try{
-    // Buscamos al usuario que coincida con CÓDIGO y CEDIS
+    // Búsqueda cruzada por código Y sede
     const snap = await db.collection('usuariosPorFecha')
                          .where('codVendedor','==',cod)
                          .where('cedis','==',cedisSel)
@@ -111,7 +146,6 @@ async function buscarUsuario(){
       return;
     }
 
-    // Creamos un ID único para el login combinando ambos datos
     userLoginId = `${cod}_${cedisSel}`;
 
     await crearCredencialSiNoExiste(userLoginId, cod);
@@ -138,7 +172,7 @@ async function buscarUsuario(){
             password: nueva,
             requiereCambio: false 
         });
-        alert("Contraseña actualizada. Por favor, ingresa de nuevo.");
+        alert("Contraseña actualizada. Ingresa de nuevo.");
         location.reload(); 
         return;
     }
@@ -149,7 +183,6 @@ async function buscarUsuario(){
         return; 
     }
 
-    // Calcular saldos filtrando por el usuario específico de ese CEDIS
     let totalCoins=0, fechaMasReciente='', nombre='';
     snap.forEach(doc=>{
       const d=doc.data();
@@ -160,7 +193,6 @@ async function buscarUsuario(){
       }
     });
 
-    // Filtramos compras también por COD y CEDIS
     const snapCompras = await db.collection('compras')
                                 .where('codVendedor','==',cod)
                                 .where('cedis','==',cedisSel)
@@ -196,12 +228,14 @@ async function guardarEmail() {
 
 async function flujoEnviarCodigo() {
     const cod = document.getElementById('codRecuperar').value.trim();
-    const cedisRec = document.getElementById('cedisRecuperar').value; // Necesitarás este campo en el modal de recuperar
+    const cedisRec = cedisRecuperar.value;
     const email = document.getElementById('emailRecuperar').value.trim();
     
-    const recoveryId = `${cod}_${cedisRec}`;
+    if(!cedisRec) return alert("Selecciona el CEDIS");
     
+    const recoveryId = `${cod}_${cedisRec}`;
     mostrarLoader('Enviando código...');
+    
     const cred = await obtenerCredencial(recoveryId);
     if (!cred || cred.email !== email) { ocultarLoader(); return alert("Los datos no coinciden."); }
     
@@ -219,7 +253,7 @@ async function restablecerPassword() {
     const codIn = document.getElementById('codigoVerificacionInput').value.trim();
     const pass = document.getElementById('nuevaPassInput').value.trim();
     const codUser = document.getElementById('codRecuperar').value.trim();
-    const cedisUser = document.getElementById('cedisRecuperar').value;
+    const cedisUser = cedisRecuperar.value;
     
     const recoveryId = `${codUser}_${cedisUser}`;
 
@@ -229,10 +263,9 @@ async function restablecerPassword() {
     location.reload();
 }
 
-/* ================= HISTORIAL DETALLADO ================= */
+/* ================= HISTORIAL ================= */
 async function cargarHistorial() {
   movimientosBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Cargando movimientos...</td></tr>';
-  
   try {
     let movimientos = [];
     let saldoCalc = 0;
@@ -243,11 +276,7 @@ async function cargarHistorial() {
                                  .get();
     snapIngresos.forEach(doc => {
       const d = doc.data();
-      movimientos.push({
-        fecha: d.fecha,
-        concepto: "Carga de Coins",
-        coins: Number(d.coins_ganados)
-      });
+      movimientos.push({ fecha: d.fecha, concepto: "Carga de Coins", coins: Number(d.coins_ganados) });
     });
 
     const snapCompras = await db.collection('compras')
@@ -257,16 +286,12 @@ async function cargarHistorial() {
     snapCompras.forEach(doc => {
       const c = doc.data();
       const fechaC = c.fecha.toDate().toISOString().slice(0, 10);
-      movimientos.push({
-        fecha: fechaC,
-        concepto: `Canje: ${c.items.map(i => i.nombre).join(", ")}`,
-        coins: -Number(c.total)
-      });
+      movimientos.push({ fecha: fechaC, concepto: `Canje: ${c.items.map(i => i.nombre).join(", ")}`, coins: -Number(c.total) });
     });
 
     movimientos.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-
     movimientosBody.innerHTML = '';
+    
     if (movimientos.length === 0) {
       movimientosBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Sin movimientos</td></tr>';
       return;
@@ -275,25 +300,19 @@ async function cargarHistorial() {
     movimientos.forEach(m => {
       saldoCalc += m.coins;
       const colorC = m.coins >= 0 ? '#007a5a' : '#d9534f';
-      const prefijo = m.coins >= 0 ? '+' : '';
-
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td style="padding: 10px; border-bottom: 1px solid #eee;">${m.fecha}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #eee;">${m.concepto}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align:center; color:${colorC}; font-weight:bold;">${prefijo}${m.coins}</td>
-        <td style="padding: 10px; border-bottom: 1px solid #eee; text-align:center; font-weight:bold;">${saldoCalc}</td>
+        <td style="padding:10px; border-bottom:1px solid #eee;">${m.fecha}</td>
+        <td style="padding:10px; border-bottom:1px solid #eee;">${m.concepto}</td>
+        <td style="padding:10px; border-bottom:1px solid #eee; text-align:center; color:${colorC}; font-weight:bold;">${m.coins >= 0 ? '+' : ''}${m.coins}</td>
+        <td style="padding:10px; border-bottom:1px solid #eee; text-align:center; font-weight:bold;">${saldoCalc}</td>
       `;
       movimientosBody.appendChild(tr);
     });
-
-  } catch (err) {
-    console.error(err);
-    movimientosBody.innerHTML = '<tr><td colspan="4">Error al cargar historial</td></tr>';
-  }
+  } catch (err) { console.error(err); }
 }
 
-/* ================= FUNCIONES UI Y TIENDA ================= */
+/* ================= UI Y TIENDA ================= */
 function mostrarDatos(u){
   loginCard.classList.add('hidden');
   cuentaCard.classList.remove('hidden');
