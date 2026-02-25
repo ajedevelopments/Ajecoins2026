@@ -1,133 +1,128 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>AJE Coins</title>
-
-<link rel="stylesheet" href="usuario.css"/>
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-<script type="text/javascript">
-   (function(){
-      // Inicialización con tu Public Key
-      emailjs.init("9ynguWEQzb63q7ITx");
-   })();
-</script>
-
-<script src="usuario.js" defer></script>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>AJE Coins - Portal Vendedor</title>
+    <link rel="stylesheet" href="usuario.css"/>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">(function(){ emailjs.init("9ynguWEQzb63q7ITx"); })();</script>
+    <script src="usuario.js" defer></script>
 </head>
 <body>
 
 <header class="topBar">
-  <img src="assets/logo.png" class="logo">
-  <span>AJE Coins</span>
+    <img src="assets/logo.png" class="logo" alt="Logo AJE">
+    <span>AJE Coins</span>
 </header>
 
 <section id="login" class="card">
-  <h2>Ingresa</h2>
-
-  <input id="cedulaInput" type="text" placeholder="Código de Vendedor" maxlength="10">
-  <input id="passwordInput" type="password" placeholder="Contraseña">
-
-  <button id="ingresarBtn">Entrar</button>
-  
-  <p style="text-align:center; margin-top:15px;">
-    <a href="#" id="olvideLink" style="color:#007a5a; font-size:14px; text-decoration:none; font-weight:bold;">¿Olvidaste tu contraseña?</a>
-  </p>
-
-  <p id="errorMsg" class="error"></p>
-
-  <p style="font-size:12px;color:#777;text-align:center; margin-top:10px;">
-    Tu contraseña inicial es tu código de vendedor
-  </p>
+    <div style="text-align:center; margin-bottom: 20px;">
+        <h2 style="color:#007a5a; margin-bottom:5px;">¡Bienvenido!</h2>
+        <p style="color:#666; font-size:14px;">Ingresa tus credenciales para ver tus coins</p>
+    </div>
+    <select id="cedisLoginSelect" class="select-moderno"></select>
+    <input id="cedulaInput" type="text" placeholder="Código de Vendedor" maxlength="10">
+    <input id="passwordInput" type="password" placeholder="Contraseña">
+    <button id="ingresarBtn">Entrar al Portal</button>
+    <p style="text-align:center; margin-top:15px;">
+        <a href="#" id="olvideLink" class="link-verde">¿Olvidaste tu contraseña?</a>
+    </p>
+    <p id="errorMsg" style="color:red; text-align:center; font-size:13px;"></p>
 </section>
 
-<section id="cuenta" class="card hidden">
+<section id="cuenta" class="card-wide hidden">
+    <div class="saldo-banner">
+        <div class="info-user-main">
+            <span style="font-size: 14px; opacity: 0.9;">Saldo Disponible</span>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <strong id="coins" style="font-size: 32px;">0</strong>
+                <span style="font-size: 18px;">Coins</span>
+            </div>
+        </div>
+        <div class="banner-actions">
+            <button class="btn-banner" id="btnVerMovimientos">📊 Movimientos</button>
+            <button class="btn-banner" id="btnNavCambiarPass">🔐 Clave</button>
+            <button id="cerrarBtn" class="btn-logout">Salir</button>
+        </div>
+    </div>
 
-  <div class="saldoHead">
-    <span>Mis coins</span>
-    <strong id="coins">0</strong>
-  </div>
+    <div class="main-layout">
+        <div class="col-main">
+            <div class="info-box" style="margin-bottom:20px; background:#f9f9f9; padding:15px; border-radius:10px;">
+                <ul id="datos" style="list-style:none; padding:0; margin:0; font-size:14px; line-height:1.8;"></ul>
+            </div>
+            <h3 class="section-title">Tienda de Canjes</h3>
+            <div id="productosTienda" class="tienda-grid"></div>
+        </div>
 
-  <ul id="datos" class="datos"></ul>
-
-  <div class="passwordBox">
-    <h4>🔐 Seguridad</h4>
-    <button id="btnCambiarPass">Cambiar contraseña manualmente</button>
-  </div>
-
-  <h3>Tienda</h3>
-  <div id="productosTienda" class="tienda"></div>
-
-  <h3>Carrito <span id="bolsa">0</span></h3>
-  <ul id="carritoList" class="carrito"></ul>
-
-  <button id="cerrarBtn" style="margin-top: 20px;">Cerrar sesión</button>
-
-  <hr style="margin: 25px 0; border: 0; border-top: 1px solid #eee;">
-
-  <h3>Mis Movimientos</h3>
-  <div style="overflow-x:auto;">
-    <table id="tablaMovimientosUsuario" style="width:100%; border-collapse: collapse; font-size: 13px;">
-      <thead>
-        <tr style="background-color: #007a5a; color: white;">
-          <th style="padding: 10px; text-align: left;">Fecha</th>
-          <th style="padding: 10px; text-align: left;">Concepto</th>
-          <th style="padding: 10px; text-align: center;">Coins</th>
-          <th style="padding: 10px; text-align: center;">Saldo</th>
-        </tr>
-      </thead>
-      <tbody id="movimientosBody">
-        </tbody>
-    </table>
-  </div>
-
+        <aside class="col-side">
+            <div class="carrito-container">
+                <h3 style="margin-top:0; display:flex; justify-content:space-between; align-items:center; font-size:18px;">
+                    🛒 Carrito <span id="bolsa" class="badge-total">0 c</span>
+                </h3>
+                <hr style="border:0; border-top:1px solid #ddd;">
+                <ul id="carritoList" class="carrito-ul"></ul>
+                <div id="containerBtnFin"></div>
+            </div>
+        </aside>
+    </div>
 </section>
+
+<div id="modalMovimientos" class="modal hidden">
+    <div class="modal-content" style="max-width: 650px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3 style="margin:0; color:#007a5a;">Mis Movimientos</h3>
+            <button class="btn-close" id="btnCloseMovs">✕</button>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr><th>Fecha</th><th>Concepto</th><th>Coins</th><th>Saldo</th></tr>
+                </thead>
+                <tbody id="movimientosBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
 <div id="modalCorreo" class="modal hidden">
-  <div class="modal-content">
-    <h4>📧 Registro de Correo</h4>
-    <p style="font-size:13px; color:#666;">Por favor, registra un correo para poder recuperar tu cuenta en caso de olvido.</p>
-    <input type="email" id="emailRegistroInput" placeholder="tu@correo.com">
-    <button id="btnGuardarEmail">Guardar y Continuar</button>
-  </div>
+    <div class="modal-content">
+        <h4>📧 Registro de Seguridad</h4>
+        <p style="font-size:13px; color:#666; margin-bottom:15px;">Ingresa tu correo para recuperar tu clave en el futuro.</p>
+        <input type="email" id="emailRegistroInput" placeholder="ejemplo@correo.com">
+        <button id="btnGuardarEmail">Guardar y Continuar</button>
+    </div>
 </div>
 
 <div id="modalRecuperar" class="modal hidden">
-  <div class="modal-content">
-    <h4 id="tituloRecuperar">Recuperar Acceso</h4>
-    <div id="step1Recuperar">
-      <input type="text" id="codRecuperar" placeholder="Código de Vendedor">
-      <input type="email" id="emailRecuperar" placeholder="Correo electrónico">
-      <button id="btnEnviarCodigo">Enviar Código</button>
+    <div class="modal-content">
+        <h4>Recuperar Contraseña</h4>
+        <input type="text" id="codRecuperar" placeholder="Código de Vendedor">
+        <input type="email" id="emailRecuperar" placeholder="Correo registrado">
+        <button id="btnEnviarCodigo">Enviar Código</button>
+        <button class="btn-secundario" id="btnCerrarRecuperar">Cancelar</button>
     </div>
-    <div id="step2Recuperar" class="hidden">
-      <input type="text" id="codigoVerificacionInput" placeholder="Código de 6 dígitos">
-      <input type="password" id="nuevaPassInput" placeholder="Nueva Contraseña">
-      <button id="btnRestablecer">Restablecer Contraseña</button>
-    </div>
-    <button class="sec" id="btnCerrarRecuperar" style="margin-top:10px;">Cancelar</button>
-  </div>
 </div>
 
-<div id="modalFin" class="modal hidden">
-  <div class="modal-content">
-    <h4>Resumen de Pedido</h4>
-    <ul id="resumenList"></ul>
-    <p id="totalFin" style="font-weight:bold;"></p>
-    <button id="btnConfirmar">Confirmar Canje</button>
-    <button id="btnCancelar" class="sec">Volver</button>
-  </div>
+<div id="modalFin" class="modal-canje" style="display: none;">
+    <div class="modal-content-canje">
+        <div class="modal-header"><h4>Confirmar Canje</h4></div>
+        <div class="modal-body">
+            <ul id="resumenList" class="resumen-lista"></ul>
+            <div style="background:#eef7f4; padding:10px; border-radius:10px; margin:10px 0;">
+                <p id="totalFin" style="font-weight:bold; color:#007a5a; margin:0;"></p>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="btnConfirmar" style="margin-bottom:10px;">CONFIRMAR COMPRA</button>
+            <button id="btnCancelar" class="btn-secundario">Regresar</button>
+        </div>
+    </div>
 </div>
 
-<div id="loader" class="loader">
-  <div class="spinner"></div>
-  <p>Procesando…</p>
-</div>
+<div id="toast" class="toast hidden">¡Producto agregado!</div>
+<div id="loader" class="loader-overlay"><div class="spinner"></div><p>Cargando...</p></div>
 
 </body>
 </html>
